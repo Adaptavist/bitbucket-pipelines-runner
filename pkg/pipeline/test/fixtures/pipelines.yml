@@ -1,0 +1,10 @@
+- owner: example-owner
+  repo: example-repo
+  ref: example-branch
+  pipeline: example-pipeline
+  variables:
+    - key: example-var-1
+      value: example-val-1
+    - key: example-secure-var-1
+      value: example-secure-val-2
+      secured: true
