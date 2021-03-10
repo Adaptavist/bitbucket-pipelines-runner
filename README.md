@@ -11,7 +11,6 @@ The first iteration is intended to provide something like the previously mention
 
 - Please try not to judge the code too much. I'm new to golang and I just want to get it working first.
 - Tests are lacking at the moment
-- It is the intent to add support for files to specify pipelines and variables
 
 ## Configuration
 
