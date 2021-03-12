@@ -26,4 +26,4 @@ jobs:
       - uses: go-semantic-release/action@v1.11.2
         with:
           ghr: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PA_TOKEN }}
