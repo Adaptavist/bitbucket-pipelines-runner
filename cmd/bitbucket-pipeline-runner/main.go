@@ -25,6 +25,10 @@ func directIssetOrPanic(owner string, repoSlug string, ref string, pipeline stri
 	return true
 }
 
+func panicIfAnyStepsFails(steps bitbucket.PipelineSteps) {
+
+}
+
 func run(repo bitbucket.Repo, auth http.Auth, pipeline bitbucket.Pipeline) {
 	logTarget := fmt.Sprintf("%s:%s", repo.GetFullName(), pipeline.Target.GetTargetDescriptor())
 	log.Printf("%s [INITIALISING]", logTarget)
