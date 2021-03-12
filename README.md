@@ -20,11 +20,15 @@ Regardless of the configuration choice, you must have an App Password setup with
 ### ENV Based
 
 ```bash
-export BITBUCKET_USERNAME="username"
-export BITBUCKET_PASSWORD="password"
+export BPR_BITBUCKET_USERNAME="username"
+export BPR_BITBUCKET_PASSWORD="password"
 ```
 
 ### File based
+
+Bpr will automatically look in your home directory for `./bpr/config.env`. However, you can override
+this using the `BPR_CONFIG_PATH` environment variable which must be an absolute path to the config.
+
 
 ```ini
 ; ~/.bpr/config.env

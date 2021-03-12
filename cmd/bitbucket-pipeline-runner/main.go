@@ -53,7 +53,7 @@ func main() {
 	files := flag.Args()
 
 	// Initialise config
-	config := config.LoadConfigOrPanic()
+	config := config.LoadConfigOrPanic(true)
 	auth := config.GetAuth()
 
 	// If any of the direct run params are set
