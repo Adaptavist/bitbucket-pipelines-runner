@@ -1,6 +1,9 @@
 package bitbucket
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // Creds for authenticating with BitBucket (BasicAuth)
 type Creds struct {
@@ -26,10 +29,20 @@ func UnmarshalVariables(v string) (variables Variables, err error) {
 
 // Target pipeline for a BitBucket to run
 type Target struct {
-	Type     string                 `json:"type"`
-	RefType  string                 `json:"ref_type"`
-	RefName  string                 `json:"ref_name"`
-	Selector map[string]interface{} `json:"selector"`
+	Type     string         `json:"type"`
+	RefType  string         `json:"ref_type"`
+	RefName  string         `json:"ref_name"`
+	Selector TargetSelector `json:"selector"`
+}
+
+func (t Target) GetTargetDescriptor() string {
+	return fmt.Sprintf("%s:%s", t.RefName, t.Selector.Pattern)
+}
+
+// TargetSelector description what branch/tag and pipline we are to execute
+type TargetSelector struct {
+	Type    string `json:"type"`
+	Pattern string `json:"pattern"`
 }
 
 // NewBranchTarget constructs a Target
@@ -38,9 +51,9 @@ func NewBranchTarget(branch string, target string) Target {
 		Type:    "pipeline_ref_target",
 		RefType: "branch",
 		RefName: branch,
-		Selector: map[string]interface{}{
-			"type":    "custom",
-			"pattern": target,
+		Selector: TargetSelector{
+			Type:    "custom",
+			Pattern: target,
 		},
 	}
 }
@@ -65,6 +78,11 @@ type Repo struct {
 	Slug      string
 }
 
+// GetFullName of the repo
+func (r Repo) GetFullName() string {
+	return fmt.Sprintf("%s/%s", r.Workspace, r.Slug)
+}
+
 // NewRepo constructs a Repo variable
 func NewRepo(owner, repoSlug string) Repo {
 	return Repo{
@@ -85,10 +103,39 @@ type PipelineResponse struct {
 	State       PipelineState `json:"state"`
 }
 
+type PipelineStepStateResultError struct {
+	Message string `json:"message"`
+}
+
+// PipelineStepStateResult shows if the step completed successfull
+type PipelineStepStateResult struct {
+	Name  string                       `json:"name"`
+	Error PipelineStepStateResultError `json:"error"`
+}
+
+func (r PipelineStepStateResult) HasError() bool {
+	return r.Error != PipelineStepStateResultError{}
+}
+
+func (s PipelineStepStateResult) IsSuccessfull() bool {
+	return s.Name == "SUCCESSFUL"
+}
+
+// PipelineStepState provides the state the current pipeline step is in
+type PipelineStepState struct {
+	Name   string                  `json:"name"`
+	Result PipelineStepStateResult `json:"result"`
+}
+
+func (s PipelineStepState) IsCompleted() bool {
+	return s.Name == "COMPLETED"
+}
+
 // PipelineStep on a running/complete pipeline
 type PipelineStep struct {
-	UUID string `json:"uuid"`
-	Name string `json:"name"`
+	UUID  string            `json:"uuid"`
+	Name  string            `json:"name"`
+	State PipelineStepState `json:"state"`
 }
 
 // PipelineSteps response

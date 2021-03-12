@@ -26,6 +26,9 @@ func directIssetOrPanic(owner string, repoSlug string, ref string, pipeline stri
 }
 
 func run(repo bitbucket.Repo, auth http.Auth, pipeline bitbucket.Pipeline) {
+	logTarget := fmt.Sprintf("%s:%s", repo.GetFullName(), pipeline.Target.GetTargetDescriptor())
+	log.Printf("%s [INITIALISING]", logTarget)
+
 	pipelineRun, err := bitbucket.Run(repo, auth, pipeline)
 	utils.PanicIfNotNil(err)
 	pipelineSteps, err := bitbucket.Steps(repo, auth, pipelineRun.UUID)
@@ -33,11 +36,14 @@ func run(repo bitbucket.Repo, auth http.Auth, pipeline bitbucket.Pipeline) {
 
 	// Get step logs
 	for _, pipelineStep := range pipelineSteps {
-		log, err := bitbucket.StepLogs(repo, auth, pipelineRun.UUID, pipelineStep.UUID)
-		utils.PanicIfNotNil(err)
-		fmt.Println(pipelineStep.Name)
-		fmt.Println("================================================================================")
-		fmt.Println(log)
+		logStepStatus := fmt.Sprintf("%s:%s [%s]", logTarget, pipelineStep.Name, pipelineStep.State.Result.Name)
+		if pipelineStep.State.Result.HasError() {
+			log.Printf("%s %s\n", logStepStatus, pipelineStep.State.Result.Error.Message)
+		} else {
+			stepLog, err := bitbucket.StepLogs(repo, auth, pipelineRun.UUID, pipelineStep.UUID)
+			utils.PanicIfNotNil(err)
+			log.Printf("%s:%s [LOG]\n%s\n", logTarget, pipelineStep.Name, stepLog)
+		}
 	}
 }
 
@@ -64,8 +70,6 @@ func main() {
 		if len(files) > 0 {
 			panic(errors.New("You cannot run a pipeline directly and reference pipeline run specs at the same time"))
 		}
-
-		log.Printf("Running %s/%s/%s/%s", *ownerPtr, *repoSlugPtr, *refPtr, *pipelinePtr)
 
 		// Construct variales
 		repo := bitbucket.NewRepo(*ownerPtr, *repoSlugPtr)
