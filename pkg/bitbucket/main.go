@@ -3,6 +3,7 @@ package bitbucket
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -44,6 +45,8 @@ func Run(r Repo, a http.Auth, p Pipeline) (result PipelineResponse, err error) {
 	// We are going to keep looking at the pipeling till it finishes or fails
 	for {
 		time.Sleep(sleep)
+
+		log.Printf("%s:%s [%s]", r.GetFullName(), p.Target.GetTargetDescriptor(), result.State.Name)
 
 		if result.State.Name == "COMPLETED" || result.State.Name == "FAILED" {
 			break

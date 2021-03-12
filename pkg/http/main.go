@@ -30,7 +30,6 @@ func Get(a Auth, url string) (resp []byte, err error) {
 
 	req.SetBasicAuth(a.Username, a.Password)
 	req.Header.Add("Content-Type", "application/json")
-	fmt.Printf("Get: %s\n", url)
 	res, err := client.Do(req)
 
 	if err != nil {
@@ -82,7 +81,6 @@ func Post(a Auth, url string, data interface{}) (resp []byte, err error) {
 
 	req.SetBasicAuth(a.Username, a.Password)
 	req.Header.Add("Content-Type", "application/json")
-	fmt.Printf("Posting: %s\n", url)
 	res, err := client.Do(req)
 
 	if err != nil {
