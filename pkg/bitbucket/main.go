@@ -14,8 +14,8 @@ import (
 const sleep = 10 * time.Second
 const pipelinesURLTemplate = "https://api.bitbucket.org/2.0/repositories/%s/%s/pipelines/"
 
-// State of the pipeline
-func State(r Repo, a http.Auth, uuid string) (resp PipelineResponse, err error) {
+// GetState of the pipeline
+func GetState(r Repo, a http.Auth, uuid string) (resp PipelineResponse, err error) {
 	url := strings.ToLower(fmt.Sprintf(pipelinesURLTemplate, r.Workspace, r.Slug)) + uuid
 	res, err := http.Get(a, url)
 
@@ -42,17 +42,17 @@ func Run(r Repo, a http.Auth, p Pipeline) (result PipelineResponse, err error) {
 		return
 	}
 
-	// We are going to keep looking at the pipeling till it finishes or fails
+	// We are going to keep looking at the pipeline till it finishes or fails
 	for {
 		time.Sleep(sleep)
 
-		log.Printf("%s:%s [%s]", r.GetFullName(), p.Target.GetTargetDescriptor(), result.State.Name)
+		log.Printf("%s %s:%s ", strings.ToLower(result.State.Name), r.String(), p.Target.GetTargetDescriptor())
 
 		if result.State.Name == "COMPLETED" || result.State.Name == "FAILED" {
 			break
 		}
 
-		result, err = State(r, a, result.UUID)
+		result, err = GetState(r, a, result.UUID)
 
 		if err != nil {
 			return
@@ -62,8 +62,8 @@ func Run(r Repo, a http.Auth, p Pipeline) (result PipelineResponse, err error) {
 	return
 }
 
-// Steps - gets a list of steps in a given pipeline
-func Steps(r Repo, a http.Auth, pipelineUUID string) (steps []PipelineStep, err error) {
+// GetSteps - gets a list of steps in a given pipeline
+func GetSteps(r Repo, a http.Auth, pipelineUUID string) (steps []PipelineStep, err error) {
 	url := strings.ToLower(fmt.Sprintf(pipelinesURLTemplate, r.Workspace, r.Slug)) + fmt.Sprintf("%s/steps/", pipelineUUID)
 	res, err := http.Get(a, url)
 

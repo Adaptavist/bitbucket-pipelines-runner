@@ -5,11 +5,11 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket"
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/config"
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/http"
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/pipeline"
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/utils"
 )
@@ -25,29 +25,11 @@ func directIssetOrPanic(owner string, repoSlug string, ref string, pipeline stri
 	return true
 }
 
-func panicIfAnyStepsFails(steps bitbucket.PipelineSteps) {
-
-}
-
-func run(repo bitbucket.Repo, auth http.Auth, pipeline bitbucket.Pipeline) {
-	logTarget := fmt.Sprintf("%s:%s", repo.GetFullName(), pipeline.Target.GetTargetDescriptor())
-	log.Printf("%s [INITIALISING]", logTarget)
-
-	pipelineRun, err := bitbucket.Run(repo, auth, pipeline)
-	utils.PanicIfNotNil(err)
-	pipelineSteps, err := bitbucket.Steps(repo, auth, pipelineRun.UUID)
-	utils.PanicIfNotNil(err)
-
-	// Get step logs
-	for _, pipelineStep := range pipelineSteps {
-		logStepStatus := fmt.Sprintf("%s:%s [%s]", logTarget, pipelineStep.Name, pipelineStep.State.Result.Name)
-		if pipelineStep.State.Result.HasError() {
-			log.Printf("%s %s\n", logStepStatus, pipelineStep.State.Result.Error.Message)
-		} else {
-			stepLog, err := bitbucket.StepLogs(repo, auth, pipelineRun.UUID, pipelineStep.UUID)
-			utils.PanicIfNotNil(err)
-			log.Printf("%s:%s [LOG]\n%s\n", logTarget, pipelineStep.Name, stepLog)
-		}
+func exit(ok bool) {
+	if !ok {
+		os.Exit(1)
+	} else {
+		os.Exit(0)
 	}
 }
 
@@ -56,15 +38,15 @@ func main() {
 	ownerPtr := flag.String("owner", "", "owner of the repo")
 	repoSlugPtr := flag.String("repo", "", "repo of the pipeline")
 	refPtr := flag.String("ref", "", "git ref where the pipeline exists, could be a tag or branch name")
-	pipelinePtr := flag.String("pipeline", "", "which pipeling in the ref do you want to run")
+	pipelinePtr := flag.String("pipeline", "", "which pipeline in the ref do you want to run")
 	variablesPtr := flag.String("vars", "", "JSON encoded string of variables to pass towards the pipeline")
-	// Any additional arguments are treated as filename and each one will be a config for a pipeline
+	// Any additional arguments are treated as filename and each one will be a configuration for a pipeline
 	flag.Parse()
 	files := flag.Args()
 
-	// Initialise config
-	config := config.LoadConfigOrPanic(true)
-	auth := config.GetAuth()
+	// Initialise configuration
+	configuration := config.LoadConfigOrPanic(true)
+	auth := configuration.GetAuth()
 
 	// If any of the direct run params are set
 	if !utils.Empty(*ownerPtr) || !utils.Empty(*repoSlugPtr) || !utils.Empty(*refPtr) || !utils.Empty(*pipelinePtr) {
@@ -72,31 +54,45 @@ func main() {
 		directIssetOrPanic(*ownerPtr, *repoSlugPtr, *refPtr, *pipelinePtr)
 
 		if len(files) > 0 {
-			panic(errors.New("You cannot run a pipeline directly and reference pipeline run specs at the same time"))
+			panic(errors.New("You cannot run a newPipeline directly and reference newPipeline run specs at the same time"))
 		}
 
-		// Construct variales
+		// Construct variables
 		repo := bitbucket.NewRepo(*ownerPtr, *repoSlugPtr)
 		target := bitbucket.NewBranchTarget(*refPtr, *pipelinePtr)
 		variables, err := bitbucket.UnmarshalVariables(utils.DefaultWhenEmpty(*variablesPtr, "[]"))
 		utils.PanicIfNotNil(err)
-		pipeline := bitbucket.NewPipeline(target, variables)
-
-		// Run the pipeline
-		run(repo, auth, pipeline)
+		newPipeline := bitbucket.NewPipeline(target, variables)
+		ok := RunPipeline(auth, repo, newPipeline)
+		exit(ok)
 	} else {
 		variables, err := bitbucket.UnmarshalVariables(utils.DefaultWhenEmpty(*variablesPtr, "[]"))
 		utils.PanicIfNotNil(err)
+		hasFailures := false
+
 		for _, file := range files {
 			specs, err := pipeline.UnmarshalSpecsFile(file)
 			utils.PanicIfNotNil(err)
+			log.Printf("load %s", file)
+
 			for i, spec := range specs {
-				fmt.Printf("Running: %s:%s\n", file, strconv.Itoa(i))
 				repo := spec.GetWorkspaceRepo()
-				pipeline := spec.GetPipeline()
-				pipeline.Variables = append(pipeline.Variables, variables...)
-				run(repo, auth, pipeline)
+				targetPipeline := spec.GetPipeline()
+				targetPipeline.Variables = append(targetPipeline.Variables, variables...)
+				runner := NewPipelineRunner(auth, repo, targetPipeline)
+
+				if hasFailures {
+					log.Printf("skipped %s#%d:%s", file, i, targetPipeline.Target)
+				} else {
+					ok := runner.run()
+					if !ok {
+						hasFailures = true
+					}
+					fmt.Print(strconv.FormatBool(ok))
+				}
 			}
 		}
+
+		exit(!hasFailures)
 	}
 }

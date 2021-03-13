@@ -5,12 +5,6 @@ import (
 	"fmt"
 )
 
-// Creds for authenticating with BitBucket (BasicAuth)
-type Creds struct {
-	Username string
-	Password string
-}
-
 // Variable for a BitBucket pipeline
 type Variable struct {
 	Key     string `json:"key" yaml:"key"`
@@ -35,8 +29,12 @@ type Target struct {
 	Selector TargetSelector `json:"selector"`
 }
 
-func (t Target) GetTargetDescriptor() string {
+func (t Target) String() string {
 	return fmt.Sprintf("%s:%s", t.RefName, t.Selector.Pattern)
+}
+
+func (t Target) GetTargetDescriptor() string {
+	return t.String()
 }
 
 // TargetSelector description what branch/tag and pipline we are to execute
@@ -78,8 +76,8 @@ type Repo struct {
 	Slug      string
 }
 
-// GetFullName of the repo
-func (r Repo) GetFullName() string {
+// String of the repo
+func (r Repo) String() string {
 	return fmt.Sprintf("%s/%s", r.Workspace, r.Slug)
 }
 
@@ -113,6 +111,10 @@ type PipelineStepStateResult struct {
 	Error PipelineStepStateResultError `json:"error"`
 }
 
+func (s PipelineStepStateResult) String() string {
+	return s.Name
+}
+
 func (r PipelineStepStateResult) HasError() bool {
 	return r.Error != PipelineStepStateResultError{}
 }
@@ -136,6 +138,20 @@ type PipelineStep struct {
 	UUID  string            `json:"uuid"`
 	Name  string            `json:"name"`
 	State PipelineStepState `json:"state"`
+}
+
+func (s PipelineStep) String() string {
+	return s.Name
+}
+
+// FilterSteps does what it says
+func FilterSteps(steps []PipelineStep, test func(PipelineStep) bool) (ret []PipelineStep) {
+	for _, s := range steps {
+		if test(s) {
+			ret = append(ret, s)
+		}
+	}
+	return
 }
 
 // PipelineSteps response
