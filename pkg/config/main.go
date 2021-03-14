@@ -85,10 +85,11 @@ func LoadConfigOrPanic(loadFile bool) Config {
 	return config
 }
 
-// GetAuth from the config
-func (c Config) GetAuth() http.Auth {
-	return http.Auth{
-		Username: c.BitbucketUsername,
-		Password: c.BitbucketPassword,
+func (c Config) GetHttp() http.Client {
+	return http.Client{
+		Auth: http.Auth{
+			Username: c.BitbucketUsername,
+			Password: c.BitbucketPassword,
+		},
 	}
 }

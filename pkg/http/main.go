@@ -10,14 +10,34 @@ import (
 	"time"
 )
 
+type Json interface {
+	// ToJson encodes the current struct
+	ToJson() ([]byte, error)
+}
+
 // Auth for BasicAuth
 type Auth struct {
 	Username string
 	Password string
 }
 
+// Client for HTTP
+type Client struct {
+	Auth Auth
+}
+
+// NewClient
+func NewClient(username string, password string) Client {
+	return Client{
+		Auth: Auth{
+			Username: username,
+			Password: password,
+		},
+	}
+}
+
 // Get a BasicAuth authenticated resource
-func Get(a Auth, url string) (resp []byte, err error) {
+func (h Client) Get(url string) (resp []byte, err error) {
 	req, err := http.NewRequest("GET", url, nil)
 
 	if err != nil {
@@ -28,7 +48,7 @@ func Get(a Auth, url string) (resp []byte, err error) {
 		Timeout: time.Duration(30 * time.Second),
 	}
 
-	req.SetBasicAuth(a.Username, a.Password)
+	req.SetBasicAuth(h.Auth.Username, h.Auth.Password)
 	req.Header.Add("Content-Type", "application/json")
 	res, err := client.Do(req)
 
@@ -61,7 +81,7 @@ func hasError(s int) (err error) {
 }
 
 // Post an BasicAuth authenticated resource
-func Post(a Auth, url string, data interface{}) (resp []byte, err error) {
+func (h Client)  Post(url string, data interface{}) (resp []byte, err error) {
 	reqData, err := json.Marshal(data)
 
 	if err != nil {
@@ -79,7 +99,7 @@ func Post(a Auth, url string, data interface{}) (resp []byte, err error) {
 		Timeout: time.Duration(30 * time.Second),
 	}
 
-	req.SetBasicAuth(a.Username, a.Password)
+	req.SetBasicAuth(h.Auth.Username, h.Auth.Password)
 	req.Header.Add("Content-Type", "application/json")
 	res, err := client.Do(req)
 
@@ -98,6 +118,36 @@ func Post(a Auth, url string, data interface{}) (resp []byte, err error) {
 	if err != nil {
 		return
 	}
+
+	return
+}
+
+// PostUnmarshalled makes a POST HTTP request and unmarshalls the data
+func (h Client) PostUnmarshalled(url string, data interface{}, targetPtr interface{}) (err error) {
+	resp, err := h.Post(url, data)
+
+	if err != nil {
+		return fmt.Errorf("post: %s", err)
+	}
+
+	err = json.Unmarshal(resp, targetPtr)
+
+	if err != nil {
+		return fmt.Errorf("%s: %s", err, string(resp))
+	}
+
+	return
+}
+
+// GetUnmarshalled makes a GET HTTP request and unmarshalls the data
+func (h Client) GetUnmarshalled(url string, targetPtr interface{}) (err error) {
+	resp, err := h.Get(url)
+
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(resp, targetPtr)
 
 	return
 }

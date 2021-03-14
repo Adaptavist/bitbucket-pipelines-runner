@@ -1,21 +1,19 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
-	"log"
-	"os"
-	"strconv"
-
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket"
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/config"
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/pipeline"
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/utils"
+	"log"
 )
 
-// directIssetOrPanic - check any of the vars are set or unset, if there is no consistancy... panic!
-func directIssetOrPanic(owner string, repoSlug string, ref string, pipeline string) bool {
+// directCommandOKOrPanic - check any of the vars are set or unset, if there is no consistancy... panic!
+func directCommandOKOrPanic(owner string, repoSlug string, ref string, pipeline string) bool {
 	if !utils.Empty(owner) || !utils.Empty(repoSlug) || !utils.Empty(ref) || !utils.Empty(pipeline) {
 		// Error if any of them are not set at this point
 		if utils.Empty(owner) || utils.Empty(repoSlug) || utils.Empty(ref) || utils.Empty(pipeline) {
@@ -25,11 +23,11 @@ func directIssetOrPanic(owner string, repoSlug string, ref string, pipeline stri
 	return true
 }
 
-func exit(ok bool) {
-	if !ok {
-		os.Exit(1)
-	} else {
-		os.Exit(0)
+// printStepLogs with a pretty lazy implementation
+func printStepLogs(logs map[string]string) {
+	for step, logStr := range logs {
+		log.Printf("step (%s) output >\n", step)
+		fmt.Println(logStr)
 	}
 }
 
@@ -46,27 +44,32 @@ func main() {
 
 	// Initialise configuration
 	configuration := config.LoadConfigOrPanic(true)
-	auth := configuration.GetAuth()
+	http := configuration.GetHttp()
 
 	// If any of the direct run params are set
 	if !utils.Empty(*ownerPtr) || !utils.Empty(*repoSlugPtr) || !utils.Empty(*refPtr) || !utils.Empty(*pipelinePtr) {
-
-		directIssetOrPanic(*ownerPtr, *repoSlugPtr, *refPtr, *pipelinePtr)
+		directCommandOKOrPanic(*ownerPtr, *repoSlugPtr, *refPtr, *pipelinePtr)
 
 		if len(files) > 0 {
-			panic(errors.New("You cannot run a newPipeline directly and reference newPipeline run specs at the same time"))
+			panic(errors.New("you cannot run a newPipeline directly and reference newPipeline run specs at the same time"))
 		}
 
+		var variables bitbucket.PipelineVariables
+
 		// Construct variables
-		repo := bitbucket.NewRepo(*ownerPtr, *repoSlugPtr)
-		target := bitbucket.NewBranchTarget(*refPtr, *pipelinePtr)
-		variables, err := bitbucket.UnmarshalVariables(utils.DefaultWhenEmpty(*variablesPtr, "[]"))
+		err := json.Unmarshal([]byte(utils.DefaultWhenEmpty(*variablesPtr, "[]")), &variables)
 		utils.PanicIfNotNil(err)
-		newPipeline := bitbucket.NewPipeline(target, variables)
-		ok := RunPipeline(auth, repo, newPipeline)
-		exit(ok)
+
+		logs, err := run(http, *ownerPtr, *repoSlugPtr, *refPtr, *pipelinePtr, variables)
+
+		printStepLogs(logs)
+
+		if err != nil {
+			log.Fatal(err)
+		}
 	} else {
-		variables, err := bitbucket.UnmarshalVariables(utils.DefaultWhenEmpty(*variablesPtr, "[]"))
+		var variables bitbucket.PipelineVariables
+		err := json.Unmarshal([]byte(utils.DefaultWhenEmpty(*variablesPtr, "[]")), &variables)
 		utils.PanicIfNotNil(err)
 		hasFailures := false
 
@@ -76,23 +79,18 @@ func main() {
 			log.Printf("load %s", file)
 
 			for i, spec := range specs {
-				repo := spec.GetWorkspaceRepo()
-				targetPipeline := spec.GetPipeline()
-				targetPipeline.Variables = append(targetPipeline.Variables, variables...)
-				runner := NewPipelineRunner(auth, repo, targetPipeline)
-
 				if hasFailures {
-					log.Printf("skipped %s#%d:%s", file, i, targetPipeline.Target)
+					log.Printf("skipped %s#%d:%s", file, i, spec)
 				} else {
-					ok := runner.run()
-					if !ok {
+					logs, err := run(http, spec.Owner, spec.Repo, spec.Ref, spec.Pipeline, append(spec.Variables, variables...))
+					printStepLogs(logs)
+
+					if err != nil {
 						hasFailures = true
+						log.Print(err)
 					}
-					fmt.Print(strconv.FormatBool(ok))
 				}
 			}
 		}
-
-		exit(!hasFailures)
 	}
 }
