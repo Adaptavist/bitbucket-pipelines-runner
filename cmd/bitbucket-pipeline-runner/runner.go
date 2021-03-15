@@ -2,42 +2,45 @@ package main
 
 import (
 	"errors"
-	"fmt"
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket"
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/http"
+	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/client"
+	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/http"
+	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/model"
+	"time"
 )
 
-func hasFailedSteps(steps []bitbucket.PipelineStep) bool {
-	fails := bitbucket.FilterSteps(steps, func(s bitbucket.PipelineStep) bool {
+func hasFailedSteps(steps []model.Step) bool {
+	fails := model.FilterSteps(steps, func(s model.Step) bool {
 		return s.State.Result.HasError()
 	})
 	return len(fails) > 0
 }
 
-func run(http http.Client, workspace, repo, branch, pipeline string, variables bitbucket.PipelineVariables) (logs map[string]string, err error) {
-	c := bitbucket.NewClient(http)
-	p, err := c.PostPipelineAndWait(workspace, repo, branch, pipeline, variables)
+func run(http http.Client, opts client.PipelineOpts) (logs map[string]string, err error) {
+	bitbucket := client.NewClient(http).WithSleep(2 * time.Second)
+	pipeline, err := bitbucket.PostPipelineAndWait(opts)
 
 	logs = make(map[string]string)
 
 	if err != nil {
-		return logs, fmt.Errorf("failed to run pipeline: %s", err)
+		return
 	}
 
-	steps, err := c.GetSteps(workspace, repo, p.UUID)
+	steps, err := bitbucket.GetSteps(opts, pipeline)
 
 	if err != nil {
-		return logs, fmt.Errorf("failed to get steps: %s", err)
+		return
 	}
+
+	var stepLog string
 
 	// Get step logs
 	for _, step := range steps {
 		if step.State.Result.HasError() {
 			logs[step.Name] = step.State.Result.Error.Message
 		} else {
-			stepLog, err := c.GetStepLogs(workspace, repo, p.UUID, step.UUID)
+			stepLog, err = bitbucket.GetStepLogs(opts, pipeline, step)
 			if err != nil {
-				return logs, fmt.Errorf("unable to get all logs: %s", err)
+				return
 			} else {
 				logs[step.Name] = stepLog
 			}
@@ -45,7 +48,7 @@ func run(http http.Client, workspace, repo, branch, pipeline string, variables b
 	}
 
 	if hasFailedSteps(steps) {
-		return logs, errors.New("pipeline has failed steps")
+		err = errors.New("spec has failed steps")
 	}
 
 	return

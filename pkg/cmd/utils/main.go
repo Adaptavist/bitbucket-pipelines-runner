@@ -41,7 +41,7 @@ func Marshall(v interface{}) string {
 	return string(str)
 }
 
-// MarshalFormatted marshalls an object into a formatted JSON string
+// MarshalFormatted marshals an object into a formatted JSON string
 func MarshalFormatted(v interface{}) string {
 	str, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {

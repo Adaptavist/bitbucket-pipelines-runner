@@ -4,6 +4,9 @@ DIST=./dist
 test : mods
 	go test -v ./...
 
+test_quiet : mods
+	go test ./...
+
 dist: clean test
 	GOOS=darwin  GOARCH=amd64 go build -o ${DIST}/bpr-darwin-amd64  ${SRC}
 	GOOS=darwin  GOARCH=arm64 go build -o ${DIST}/bpr-darwin-arm64  ${SRC}
@@ -23,3 +26,13 @@ run : test
 
 mods: 
 	go mod download
+
+check : test
+	staticcheck ./cmd/bitbucket-pipeline-runner/
+	staticcheck ./pkg/bitbucket/client/
+	staticcheck ./pkg/bitbucket/http/
+	staticcheck ./pkg/bitbucket/model/
+	staticcheck ./pkg/bitbucket/urls/
+	staticcheck ./pkg/cmd/config/
+	staticcheck ./pkg/cmd/spec/
+	staticcheck ./pkg/cmd/utils/

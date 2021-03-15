@@ -59,6 +59,7 @@ func (h Client) Get(url string) (resp []byte, err error) {
 	err = hasError(res.StatusCode)
 
 	if err != nil {
+		err = fmt.Errorf("failed to GET (%s) %s", url, err)
 		return
 	}
 
@@ -73,15 +74,14 @@ func (h Client) Get(url string) (resp []byte, err error) {
 
 // hasError returns an error if 40x or 50x codes are given
 func hasError(s int) (err error) {
-	// NOTE: Some 400 errors means pipelines are not enabled or a pipelines file doesn't exist!
-	if s == 400 || s == 401 || s == 402 || s == 403 || s == 500 || s == 501 || s == 502 || s == 503 {
-		err = fmt.Errorf("Received %s", strconv.Itoa(s))
+	if s >= 400 && s < 600 {
+		err = fmt.Errorf("received %s", strconv.Itoa(s))
 	}
 	return
 }
 
 // Post an BasicAuth authenticated resource
-func (h Client)  Post(url string, data interface{}) (resp []byte, err error) {
+func (h Client) Post(url string, data interface{}) (resp []byte, err error) {
 	reqData, err := json.Marshal(data)
 
 	if err != nil {
@@ -110,6 +110,7 @@ func (h Client)  Post(url string, data interface{}) (resp []byte, err error) {
 	err = hasError(res.StatusCode)
 
 	if err != nil {
+		err = fmt.Errorf("failed to POST (%s) %s", url, err)
 		return
 	}
 
@@ -123,18 +124,14 @@ func (h Client)  Post(url string, data interface{}) (resp []byte, err error) {
 }
 
 // PostUnmarshalled makes a POST HTTP request and unmarshalls the data
-func (h Client) PostUnmarshalled(url string, data interface{}, targetPtr interface{}) (err error) {
+func (h Client) PostUnmarshalled(url string, data interface{}, target interface{}) (err error) {
 	resp, err := h.Post(url, data)
 
 	if err != nil {
-		return fmt.Errorf("post: %s", err)
+		return
 	}
 
-	err = json.Unmarshal(resp, targetPtr)
-
-	if err != nil {
-		return fmt.Errorf("%s: %s", err, string(resp))
-	}
+	err = json.Unmarshal(resp, target)
 
 	return
 }

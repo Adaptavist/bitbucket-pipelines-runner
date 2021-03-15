@@ -1,7 +1,0 @@
-- owner: DanielChalk
-  repo: bitbucket-pipeline-runner
-  ref: master
-  pipeline: example
-  variables:
-    - key: NAME
-      value: Daniel

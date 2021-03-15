@@ -5,10 +5,11 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket"
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/config"
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/pipeline"
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/utils"
+	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/client"
+	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/model"
+	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/cmd/config"
+	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/cmd/spec"
+	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/cmd/utils"
 	"log"
 )
 
@@ -54,13 +55,19 @@ func main() {
 			panic(errors.New("you cannot run a newPipeline directly and reference newPipeline run specs at the same time"))
 		}
 
-		var variables bitbucket.PipelineVariables
+		var variables model.Variables
 
 		// Construct variables
 		err := json.Unmarshal([]byte(utils.DefaultWhenEmpty(*variablesPtr, "[]")), &variables)
 		utils.PanicIfNotNil(err)
 
-		logs, err := run(http, *ownerPtr, *repoSlugPtr, *refPtr, *pipelinePtr, variables)
+		opts := client.PipelineOpts{
+			Repo:      client.NewRepo(*ownerPtr, *repoSlugPtr),
+			Target:    model.NewTarget(*refPtr, *pipelinePtr),
+			Variables: variables,
+		}
+
+		logs, err := run(http, opts)
 
 		printStepLogs(logs)
 
@@ -68,21 +75,37 @@ func main() {
 			log.Fatal(err)
 		}
 	} else {
-		var variables bitbucket.PipelineVariables
+		var variables model.Variables
 		err := json.Unmarshal([]byte(utils.DefaultWhenEmpty(*variablesPtr, "[]")), &variables)
 		utils.PanicIfNotNil(err)
 		hasFailures := false
 
+		var specFiles = make(map[string]spec.Spec)
 		for _, file := range files {
-			specs, err := pipeline.UnmarshalSpecsFile(file)
+			specFile, err := spec.UnmarshalSpecsFile(file)
 			utils.PanicIfNotNil(err)
-			log.Printf("load %s", file)
+			log.Printf("loaded %s\n", file)
+			specFiles[file] = specFile
+		}
 
-			for i, spec := range specs {
+		// OK now we can start doing some real work
+		for file, pipelineSpecs := range specFiles {
+			for key, pipelineSpec := range pipelineSpecs.Pipelines {
+				log.Printf("%s/%s", file, key)
+				opts, err := pipelineSpecs.MakePipelineOpts(key)
+
+				// Are we good or are we skipping
+				if err != nil {
+					hasFailures = true
+					log.Printf("failed to make pipelines opts: %s\n", err)
+				}
+
 				if hasFailures {
-					log.Printf("skipped %s#%d:%s", file, i, spec)
+					log.Printf("skipped %s %s:%s", file, key, pipelineSpec)
 				} else {
-					logs, err := run(http, spec.Owner, spec.Repo, spec.Ref, spec.Pipeline, append(spec.Variables, variables...))
+					// Append variables if we have any from the flags
+					opts.Variables = model.AppendVariables(opts.Variables, variables)
+					logs, err := run(http, opts)
 					printStepLogs(logs)
 
 					if err != nil {

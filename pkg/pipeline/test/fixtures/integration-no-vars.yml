@@ -1,4 +1,0 @@
-- owner: DanielChalk
-  repo: bitbucket-pipeline-runner
-  ref: wip
-  pipeline: example
