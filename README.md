@@ -21,109 +21,62 @@ proven. Then support for having pipeline configuration stored in files.
 Regardless of the configuration choice, you must have an App Password setup with `write` access to
 `pipelines`.
 
-### ENV Based
+**Using env vars**
 
 ```bash
 export BPR_BITBUCKET_USERNAME="username"
 export BPR_BITBUCKET_PASSWORD="password"
 ```
 
-### File based
-
-Bpr will automatically look in your home directory for `./bpr/config.env`. However, you can override this using
-the `BPR_CONFIG_PATH` environment variable which must be an absolute path to the config.
+**Using config file**
 
 ```ini
-; ~/.bpr/config.env
-BITBUCKET_USERNAME=username
-BITBUCKET_PASSWORD=password
+; ~/.bpr.env
+BITBUCKET_USERNAME="username"
+BITBUCKET_PASSWORD="password"
 ```
 
-## Usage
+## Commands
 
-| FLAG     | DESCRIPTION                                |
-| -------- | ------------------------------------------ |
-| owner    | the org/workspace/user that owns the repo  |
-| ref      | git branch the custom pipeline lives under |
-| pipeline | the name of the custom pipe                |
-| vars     | A list of variables provided in JSON       |
+### Pipeline
 
-`owner`, `ref`, and `pipeline` must all be used together.
+Runs a single pipeling via flags 
 
-### Example
+`bpr [args] workspace/repo_slug/branch[/pipeline_name]`
 
-#### Example 1 - Flags Only - Currenctly implemented
+- `--var 'key=value'` a repeatable flag for providing variables to your pipeline
+- `--secrete 'key=value'` a repeatable flag for providing secured variables to your pipeling
+- `--dry` shows what the command will do rather than do it
+
+#### Examples
 
 ```bash
-bpr -owner 'DanielChalk' \
-    -repo 'bitbucket-pipeline-runner' \
-    -ref 'wip' \
-    -pipeline 'example' \
-    -vars '[{"key":"NAME", "value":"daniel"}]'
+# runs default pipeline on the master branch
+bpr pipeline Owner/repo-slug/master 
+# runs a custom pipeline (my-pipeline) on master
+bpr pipeline Owner/repo-slug/master/my-pipeline
+# runs a pipeling with variables/secrets to send to your pipeline
+bpr pipeline Owner/repo-slug/master --var 'username=user' --secret 'password=password' --var 'timeout=10'
 ```
 
-#### Example 2 - File based
+### Spec
+
+Loads all `.bpr.yml` files in your current working directory to build a list of pipelines to run.
+
+#### Example Spec file
 
 ```yaml
-# pipeline-spec.yml
-pipelines:
-  my_pipeline:
-    pipeline: workspace/repo/branch/pipeline
-    variables:
-      KEY: Value
-```
-
-```bash
-bpr pipeline-spec.yml
-```
-
-#### Example 3 - File + Vars - to be implemented
-
-This method allows you to have a generic file with most of the configuration, but the `-vars` flag allows you to
-override and append values.
-
-```yaml
-# pipeline-spec.yml
-pipelines:
-  my_pipeline:
-    pipeline: workspace/repo/branch/pipeline
-    # No vars we we will set them externally
-```
-
-```bash
-bpr \
-  -vars '[{"key": "NAME", "value": "Daniel"}]' \
-  pipeline-spec.yml
-```
-
-### Variables
-
-Variables are set in two different schema types based on whether they are set via flags, or a YAML file.
-
-#### YAML
-
-In the YAML spec files, variables are simple key/value pairs. This is because we do not want to allow secured variables
-being committed in them.
-
-```yaml
-# You can also set global variables for the pipelines in your specs file, making for less copying and pasting.
+# Variables global to pipelines created with in
 variables:
-  GLOBAL_VAR: var
+  USERNAME: username
 pipelines:
-  my_pipeline:
-    pipeline: workspace/repo/branch/pipeline
-    # Variables are key/value only, if you want to use secured variables, you must provide them as a flag    
-    variables:
-      KEY: Value
-```
-
-#### Flag
-
-The `-vars` command line flag takes a JSON list of variables, which support the "secured" property
-
-```bash
-$VARIABLES='[{"key": "MY_VAR_NAME", "value": "MY_VAR_VALUE" }, {"key": "MY_SECURE_VAR_NAME", "value": "MY_SECURE_VAR_VALUE", "secured": true}]'
-bpr -vars $VARIABLES
+  # Pipeline keys are be globally unique to your working directory, not just the file
+  my_pipeline_key:
+    pipeline: Owner/repo-slug/branch # defaults to "default" 
+  my_other_pipeliny_key:
+    pipeline: Owner/repo-slug/branch/pipeline # custom pipeline on master
+    variables: 
+      WAIT: 10 # Provides WAIT as a variable to the pipeline
 ```
 
 #### Variable precedence

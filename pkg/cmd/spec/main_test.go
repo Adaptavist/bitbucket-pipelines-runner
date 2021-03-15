@@ -1,7 +1,6 @@
 package spec
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -49,7 +48,6 @@ pipelines:
 
 	opts, err := spec.MakePipelineOpts("test")
 	assert.Nil(t, err, "err should be nil")
-	fmt.Print(opts.Variables)
 	assert.Len(t, opts.Variables, 1, "pipeline should have one variable, go %s")
 
 }

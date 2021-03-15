@@ -1,4 +1,4 @@
-SRC=./cmd/bitbucket-pipeline-runner
+SRC=./cmd/bpr
 DIST=./dist
 
 test : mods
@@ -28,7 +28,7 @@ mods:
 	go mod download
 
 check : test
-	staticcheck ./cmd/bitbucket-pipeline-runner/
+	staticcheck ./cmd/bpr/
 	staticcheck ./pkg/bitbucket/client/
 	staticcheck ./pkg/bitbucket/http/
 	staticcheck ./pkg/bitbucket/model/

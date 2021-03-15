@@ -1,5 +1,0 @@
-variables:
-  NAME: User
-pipelines:
-  example:
-    pipeline: adaptavist/bitbucket-pipeline-runner/master/example
