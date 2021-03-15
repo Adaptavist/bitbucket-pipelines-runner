@@ -13,7 +13,7 @@ type Target struct {
 }
 
 func (t Target) String() string {
-	return fmt.Sprintf("%s:%s", t.RefName, t.Selector.Pattern)
+	return fmt.Sprintf("%s/%s", t.RefName, t.Selector.Pattern)
 }
 
 func (t Target) GetTargetDescriptor() string {

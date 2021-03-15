@@ -69,7 +69,7 @@ bpr -owner 'DanielChalk' \
 pipelines:
   my_pipeline:
     pipeline: workspace/repo/branch/pipeline
-    variables: 
+    variables:
       KEY: Value
 ```
 
@@ -109,7 +109,7 @@ being committed in them.
 # You can also set global variables for the pipelines in your specs file, making for less copying and pasting.
 variables:
   GLOBAL_VAR: var
-pipelines: 
+pipelines:
   my_pipeline:
     pipeline: workspace/repo/branch/pipeline
     # Variables are key/value only, if you want to use secured variables, you must provide them as a flag    

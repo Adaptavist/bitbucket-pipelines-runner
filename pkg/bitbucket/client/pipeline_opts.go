@@ -7,6 +7,7 @@ import (
 
 // PipelineOpts is in internal model for requesting a spec to be executed
 type PipelineOpts struct {
+	Dry       bool
 	Repo      Repo
 	Target    model.Target
 	Variables model.Variables
@@ -19,6 +20,11 @@ func (o PipelineOpts) String() string {
 // NewPipelineOpts constructs empty PipelineOpts object
 func NewPipelineOpts() PipelineOpts {
 	return PipelineOpts{}
+}
+
+func (o PipelineOpts) WithDry(dry bool) PipelineOpts {
+	o.Dry = dry
+	return o
 }
 
 // WithRepo adds Repo to the current PipelineOpts
@@ -42,7 +48,7 @@ func (o PipelineOpts) WithVariables(variables model.Variables) PipelineOpts {
 // NewPipelineRequest creates model.PipelineRequest from PipelineOpts
 func (o PipelineOpts) NewPipelineRequest() model.PipelineRequest {
 	return model.PipelineRequest{
-		Target: o.Target,
+		Target:    o.Target,
 		Variables: o.Variables,
 	}
 }

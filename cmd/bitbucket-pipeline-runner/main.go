@@ -34,11 +34,12 @@ func printStepLogs(logs map[string]string) {
 
 func main() {
 	// Flags - will replace with cobra at some point
-	ownerPtr := flag.String("owner", "", "owner of the repo")
-	repoSlugPtr := flag.String("repo", "", "repo of the pipeline")
-	refPtr := flag.String("ref", "", "git ref where the pipeline exists, could be a tag or branch name")
-	pipelinePtr := flag.String("pipeline", "", "which pipeline in the ref do you want to run")
-	variablesPtr := flag.String("vars", "", "JSON encoded string of variables to pass towards the pipeline")
+	ownerPtr := flag.String("owner", "", "-owner Username")
+	repoSlugPtr := flag.String("repo", "", "-repo slug")
+	refPtr := flag.String("ref", "", "-ref master")
+	pipelinePtr := flag.String("pipeline", "", "-pipeline deploy")
+	variablesPtr := flag.String("vars", "", `-vars '[{"key":"VAR_NAME", "value": "VAR_VALUE"}]'`)
+	dryPtr := flag.Bool("dry", false, "-dry")
 	// Any additional arguments are treated as filename and each one will be a configuration for a pipeline
 	flag.Parse()
 	files := flag.Args()
@@ -62,6 +63,7 @@ func main() {
 		utils.PanicIfNotNil(err)
 
 		opts := client.PipelineOpts{
+			Dry:       *dryPtr,
 			Repo:      client.NewRepo(*ownerPtr, *repoSlugPtr),
 			Target:    model.NewTarget(*refPtr, *pipelinePtr),
 			Variables: variables,
@@ -93,12 +95,13 @@ func main() {
 			for key, pipelineSpec := range pipelineSpecs.Pipelines {
 				log.Printf("%s/%s", file, key)
 				opts, err := pipelineSpecs.MakePipelineOpts(key)
-
 				// Are we good or are we skipping
 				if err != nil {
 					hasFailures = true
 					log.Printf("failed to make pipelines opts: %s\n", err)
 				}
+
+				opts = opts.WithDry(*dryPtr)
 
 				if hasFailures {
 					log.Printf("skipped %s %s:%s", file, key, pipelineSpec)

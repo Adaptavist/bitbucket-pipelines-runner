@@ -2,9 +2,12 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/client"
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/http"
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/model"
+	"log"
+	"strings"
 	"time"
 )
 
@@ -15,7 +18,28 @@ func hasFailedSteps(steps []model.Step) bool {
 	return len(fails) > 0
 }
 
+func dryRun(opts client.PipelineOpts) map[string]string {
+	var out []string
+
+	log.Print(opts)
+	out = append(out, "variables:")
+	for _, pipelineVariable := range opts.Variables {
+		if pipelineVariable.Secured {
+			out = append(out, fmt.Sprintf("%s: !SECURED!", pipelineVariable.Key))
+		} else {
+			out = append(out, fmt.Sprintf("%s: %s!", pipelineVariable.Key, pipelineVariable.Value))
+		}
+	}
+
+	return map[string]string{"dry": strings.Join(out, "\n")}
+}
+
 func run(http http.Client, opts client.PipelineOpts) (logs map[string]string, err error) {
+	if opts.Dry {
+		logs = dryRun(opts)
+		return
+	}
+
 	bitbucket := client.NewClient(http).WithSleep(2 * time.Second)
 	pipeline, err := bitbucket.PostPipelineAndWait(opts)
 

@@ -18,8 +18,8 @@ func (s State) String() string {
 
 // PipelineRequest containing details we need to start a pipeline
 type PipelineRequest struct {
-	Target      Target    `json:"target"`
-	Variables   Variables `json:"variables"`
+	Target    Target    `json:"target"`
+	Variables Variables `json:"variables"`
 }
 
 // Pipeline containing details we need to lookup steps and status
