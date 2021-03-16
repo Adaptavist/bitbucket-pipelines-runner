@@ -22,15 +22,13 @@ func hasFailedSteps(steps []model.Step) bool {
 // printStepLogs with a pretty lazy implementation
 func printStepLogs(logs map[string]string) {
 	for step, logStr := range logs {
-		log.Printf("step (%s) output >\n", step)
+		log.Printf("%s output >\n", step)
 		fmt.Println(logStr)
 	}
 }
 
 func DoDryRun(opts client.PipelineOpts) map[string]string {
 	var out []string
-
-	log.Print(opts)
 	out = append(out, "variables:")
 	for _, pipelineVariable := range opts.Variables {
 		if pipelineVariable.Secured {

@@ -69,9 +69,7 @@ Run a specific pipeline from the files by its YAML key
 
 		// OK now we can start doing some real work
 		for file, pipelineSpecs := range specFiles {
-			for key, pipelineSpec := range pipelineSpecs.Pipelines {
-				log.Printf("%s/%s", file, key)
-
+			for key := range pipelineSpecs.Pipelines {
 				// Prepare the pipeline
 				opts, err := pipelineSpecs.MakePipelineOpts(key)
 				if err != nil {
@@ -101,7 +99,7 @@ Run a specific pipeline from the files by its YAML key
 
 				// Checks
 				if hasFailures {
-					log.Printf("skipped %s %s:%s", file, key, pipelineSpec)
+					log.Printf("skipped %s (%s) %s", key, file, opts)
 					continue
 				}
 
@@ -110,6 +108,7 @@ Run a specific pipeline from the files by its YAML key
 				}
 
 				// Go!
+				log.Printf("running %s (%s) %s", key, file, opts)
 				logs, err := DoRun(httpClient, opts)
 				printStepLogs(logs)
 
