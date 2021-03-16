@@ -3,12 +3,13 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/client"
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/http"
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/model"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/client"
+	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/http"
+	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/model"
 )
 
 func hasFailedSteps(steps []model.Step) bool {
@@ -50,6 +51,7 @@ func DoRun(http http.Client, opts client.PipelineOpts) (logs map[string]string, 
 
 	bitbucket := client.NewClient(http).WithSleep(2 * time.Second)
 	pipeline, err := bitbucket.PostPipelineAndWait(opts)
+	pipelineFailed := pipeline.State.Result.Name == "FAILED"
 
 	logs = make(map[string]string)
 
@@ -79,8 +81,8 @@ func DoRun(http http.Client, opts client.PipelineOpts) (logs map[string]string, 
 		}
 	}
 
-	if hasFailedSteps(steps) {
-		err = errors.New("spec has failed steps")
+	if pipelineFailed {
+		err = errors.New("pipeline failed")
 	}
 
 	return
