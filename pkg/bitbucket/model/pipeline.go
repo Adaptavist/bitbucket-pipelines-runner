@@ -8,7 +8,8 @@ import (
 
 // State of a Pipeline
 type State struct {
-	Name string `json:"name"`
+	Name   string `json:"name"`
+	Result Result `json:"result"`
 }
 
 // String representation of State
@@ -40,4 +41,30 @@ func (p Pipeline) String() string {
 // ToJSON marshals the Pipeline to JSON
 func (p Pipeline) ToJSON() ([]byte, error) {
 	return json.Marshal(p)
+}
+
+// ResultError so we can extract a client specific error
+type ResultError struct {
+	Message string `json:"message"`
+}
+
+// Result shows if the step completed successful
+type Result struct {
+	Name  string      `json:"name"`
+	Error ResultError `json:"error"`
+}
+
+// String representation of a Result
+func (s Result) String() string {
+	return s.Name
+}
+
+// HasError does what is said
+func (s Result) HasError() bool {
+	return s.Error != ResultError{}
+}
+
+// OK does what it says
+func (s Result) OK() bool {
+	return s.Name == "SUCCESSFUL"
 }

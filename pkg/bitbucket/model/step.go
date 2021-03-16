@@ -2,22 +2,11 @@ package model
 
 import "encoding/json"
 
-// StepState provides the state the current spec step is in
-type StepState struct {
-	Name   string          `json:"name"`
-	Result StepStateResult `json:"result"`
-}
-
-// IsCompleted is true if the Step's StepState is complete
-func (s StepState) IsCompleted() bool {
-	return s.Name == "COMPLETED"
-}
-
 // Step on a running/complete spec
 type Step struct {
-	UUID  string    `json:"uuid"`
-	Name  string    `json:"name"`
-	State StepState `json:"state"`
+	UUID  string `json:"uuid"`
+	Name  string `json:"name"`
+	State State  `json:"state"`
 }
 
 // String representation of a Step
@@ -28,32 +17,6 @@ func (s Step) String() string {
 // ToJSON marshals the Step to JSON
 func (s Step) ToJSON() ([]byte, error) {
 	return json.Marshal(s)
-}
-
-// StepStateResultError so we can extract a client specific error
-type StepStateResultError struct {
-	Message string `json:"message"`
-}
-
-// StepStateResult shows if the step completed successful
-type StepStateResult struct {
-	Name  string               `json:"name"`
-	Error StepStateResultError `json:"error"`
-}
-
-// String representation of a StepStateResult
-func (s StepStateResult) String() string {
-	return s.Name
-}
-
-// HasError does what is said
-func (s StepStateResult) HasError() bool {
-	return s.Error != StepStateResultError{}
-}
-
-// OK does what it says
-func (s StepStateResult) OK() bool {
-	return s.Name == "SUCCESSFUL"
 }
 
 // StepsResponse response
