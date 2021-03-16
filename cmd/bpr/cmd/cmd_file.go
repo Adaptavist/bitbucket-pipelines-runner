@@ -82,8 +82,14 @@ Run a specific pipeline from the files by its YAML key
 
 				// Overrides
 				opts = opts.WithDry(dryRun)
-				opts.Variables = model.AppendVariables(opts.Variables, variables)
-				opts.Variables = model.AppendVariables(opts.Variables, securedVariables)
+
+				if len(variables) > 0 {
+					opts.Variables = model.AppendVariables(opts.Variables, variables)
+				}
+
+				if len(securedVariables) > 0 {
+					opts.Variables = model.AppendVariables(opts.Variables, securedVariables)
+				}
 
 				if targetPipeline != "" {
 					opts.Target.Selector.Pattern = targetPipeline
