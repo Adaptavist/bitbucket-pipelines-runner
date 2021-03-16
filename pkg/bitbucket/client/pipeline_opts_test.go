@@ -1,9 +1,10 @@
 package client
 
 import (
+	"testing"
+
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/model"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 /*
@@ -14,7 +15,7 @@ func TestOptsAPI(t *testing.T) {
 	o := PipelineOpts{}.
 		WithRepo(NewRepo("user", "slug")).
 		WithTarget(model.NewTarget("branch", "spec")).
-		WithVariables(model.Variables{{"KEY", "VALUE", false}})
+		WithVariables(model.Variables{{Key: "KEY", Value: "VALUE", Secured: false}})
 
 	p := o.NewPipelineRequest()
 

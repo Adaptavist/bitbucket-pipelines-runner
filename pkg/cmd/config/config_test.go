@@ -10,18 +10,18 @@ import (
 const username = "uname"
 const password = "passwd"
 
-func env() (err error) {
-	err = os.Setenv("BPR_BITBUCKET_USERNAME", username)
+func env() {
+	err := os.Setenv("BPR_BITBUCKET_USERNAME", username)
+
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	err = os.Setenv("BPR_BITBUCKET_PASSWORD", password)
-	if err != nil {
-		return err
-	}
 
-	return
+	if err != nil {
+		panic(err)
+	}
 }
 
 func clear() {
