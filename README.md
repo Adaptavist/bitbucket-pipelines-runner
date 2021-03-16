@@ -63,7 +63,7 @@ bpr pipeline Owner/repo-slug/master --var 'username=user' --secret 'password=pas
 
 Loads all `.bpr.yml` files in your current working directory to build a list of pipelines to run.
 
-#### Example Spec file
+#### Example Spec file
 
 ```yaml
 # Variables global to pipelines created with in
@@ -79,10 +79,16 @@ pipelines:
       WAIT: 10 # Provides WAIT as a variable to the pipeline
 ```
 
-#### Variable precedence
+#### Running Spec FilterSteps
 
-Variables are layered onto each other in the following order:
-
-- Global spec file variables (the lowest precedence)
-- Spec pipeline variables
-- Variables provided by the flag (the highest precedence)
+```bash
+cd my-pipeline-dirs
+# Run all the pipelines found in your directory
+bpr spec 
+# Run a specific pipeline
+bpr spec --only my_pipeline
+# Run piplines with additional variables
+bpr spec --var 'key=value' --secret 'key2=value'
+# Do a dry run
+bpr spec --dry
+```
