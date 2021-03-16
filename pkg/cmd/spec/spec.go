@@ -2,6 +2,7 @@ package spec
 
 import (
 	"fmt"
+
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket"
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/client"
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/model"
@@ -11,9 +12,13 @@ type Variables map[string]string
 
 // Merge two Variable lists
 func (v Variables) Merge(merge Variables) (merged Variables) {
-	merged = v
-	for key, val := range merge {
-		v[key] = val
+	if len(v) > 0 {
+		merged = v
+		for key, val := range merge {
+			v[key] = val
+		}
+	} else {
+		merged = merge
 	}
 	return
 }
