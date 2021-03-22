@@ -92,7 +92,7 @@ Run a specific pipeline from the files by its YAML key
 				}
 
 				if targetPipeline != "" {
-					opts.Target.Selector.Pattern = targetPipeline
+					opts.Target.WithCustomTarget(targetPipeline)
 				}
 
 				if targetType != "" {
