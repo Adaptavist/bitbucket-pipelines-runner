@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"log"
+
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/client"
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/model"
+	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/cmd/spec"
 	"github.com/spf13/cobra"
-	"log"
 )
 
 // pipelineCmd represents the run command
@@ -21,18 +23,22 @@ Run pipeline with secured variables
 		if len(args) == 0 {
 			log.Fatal("pipeline expected")
 		}
+		httpClient := getHTTPClient()
 		variables, err := stringsToVars(variablesFlag, false)
 		fatalIfNotNil(err)
 		securedVariables, err := stringsToVars(secureVarsFlag, true)
 		fatalIfNotNil(err)
-		target, err := NewTarget(args[0])
+		targetSpec, err := spec.StringToTarget(args[0])
 		fatalIfNotNil(err)
+		target := model.NewTarget(targetSpec.RefType, targetSpec.RefName)
+		if targetSpec.CustomTarget != "" {
+			target.WithCustomTarget(targetSpec.CustomTarget)
+		}
 		opts := client.NewPipelineOpts().
 			WithDry(dryRun).
 			WithVariables(model.AppendVariables(variables, securedVariables)).
-			WithRepo(client.NewRepo(target.Workspace, target.Repo)).
-			WithTarget(model.NewTarget(target.Ref, target.Pipeline))
-		httpClient := getHTTPClient()
+			WithRepo(client.NewRepo(targetSpec.Workspace, targetSpec.Repo)).
+			WithTarget(target)
 		logs, err := DoRun(httpClient, opts)
 		printStepLogs(logs)
 		fatalIfNotNil(err)

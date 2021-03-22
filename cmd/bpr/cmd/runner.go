@@ -3,13 +3,13 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/client"
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/http"
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/model"
+	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/cmd/utils"
 )
 
 func hasFailedSteps(steps []model.Step) bool {
@@ -22,23 +22,20 @@ func hasFailedSteps(steps []model.Step) bool {
 // printStepLogs with a pretty lazy implementation
 func printStepLogs(logs map[string]string) {
 	for step, logStr := range logs {
-		log.Printf("%s output >\n", step)
+		fmt.Printf("%s output >\n", step)
 		fmt.Println(logStr)
 	}
 }
 
 func DoDryRun(opts client.PipelineOpts) map[string]string {
-	var out []string
-	out = append(out, "variables:")
+	jsonStr := utils.MarshalFormatted(opts)
 	for _, pipelineVariable := range opts.Variables {
 		if pipelineVariable.Secured {
-			out = append(out, fmt.Sprintf("  %s: !SECURED!", pipelineVariable.Key))
-		} else {
-			out = append(out, fmt.Sprintf("  %s: %s", pipelineVariable.Key, pipelineVariable.Value))
+			jsonStr = strings.ReplaceAll(jsonStr, pipelineVariable.Value, "!SECURED!")
 		}
 	}
 
-	return map[string]string{"dry": strings.Join(out, "\n")}
+	return map[string]string{"dry": jsonStr}
 }
 
 func DoRun(http http.Client, opts client.PipelineOpts) (logs map[string]string, err error) {
@@ -48,8 +45,24 @@ func DoRun(http http.Client, opts client.PipelineOpts) (logs map[string]string, 
 	}
 
 	bitbucket := client.NewClient(http).WithSleep(2 * time.Second)
+
+	// if the target is a tag, we need to look it up, get the commit hash and add it to the request
+	if opts.Target.RefType == model.RefTypeTag {
+		var tag model.TagResponse
+		tag, err = bitbucket.GetTag(opts)
+
+		if err != nil {
+			return
+		}
+
+		opts.Target.Commit = &model.Commit{
+			Type: "commit",
+			Hash: tag.Target.Hash,
+		}
+	}
+
 	pipeline, err := bitbucket.PostPipelineAndWait(opts)
-	pipelineFailed := pipeline.State.Result.Name == "FAILED"
+	pipelineFailed := err != nil || pipeline.State.Result.Name == "FAILED"
 
 	logs = make(map[string]string)
 

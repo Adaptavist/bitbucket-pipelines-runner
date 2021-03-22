@@ -25,10 +25,11 @@ func (v Variables) Merge(merge Variables) (merged Variables) {
 
 // PipelineTarget
 type PipelineTarget struct {
-	Workspace string
-	Repo      string
-	Ref       string
-	Pipeline  string
+	Workspace    string
+	Repo         string
+	RefType      string
+	RefName      string
+	CustomTarget string
 }
 
 // Pipeline represent a spec in our YAML config
@@ -54,15 +55,20 @@ func (s Spec) MakePipelineOpts(name string) (opts client.PipelineOpts, err error
 		return opts, fmt.Errorf("%s spec spec not found", name)
 	}
 
-	target, err := spec.GetTarget()
-
+	targetSpec, err := spec.GetTarget()
 	if err != nil {
 		return
 	}
 
+	target := model.NewTarget(targetSpec.RefType, targetSpec.RefName)
+
+	if targetSpec.CustomTarget != "" {
+		target.WithCustomTarget(targetSpec.CustomTarget)
+	}
+
 	opts = bitbucket.NewPipelineOpts().
-		WithTarget(model.NewTarget(target.Ref, target.Pipeline)).
-		WithRepo(client.NewRepo(target.Workspace, target.Repo)).
+		WithTarget(target).
+		WithRepo(client.NewRepo(targetSpec.Workspace, targetSpec.Repo)).
 		WithVariables(s.ToBitbucketVariables(s.Variables.Merge(spec.Variables)))
 
 	return

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"path/filepath"
 
@@ -11,7 +12,8 @@ import (
 )
 
 var targetPipeline string
-var targetBranch string
+var targetType string
+var targetName string
 var onlyRun string
 
 // specCmd represents the run command
@@ -48,13 +50,13 @@ Run a specific pipeline from the files by its YAML key
 		for _, match := range matches {
 			specFile, err := spec.UnmarshalSpecsFile(match)
 			utils.PanicIfNotNil(err)
-			log.Printf("loaded %s\n", match)
+			fmt.Printf("loaded %s\n", match)
 			specFiles[match] = specFile
 			// Add pipeline keys to specMap and error if a conflicted key is found
 			for pKey := range specFile.Pipelines {
 				dVal, found := specMap[pKey]
 				if found {
-					log.Printf("duplicate pipeline key (%s) found in %s and %s", pKey, dVal, match)
+					fmt.Printf("duplicate pipeline key (%s) found in %s and %s", pKey, dVal, match)
 					hasFailures = true
 				} else {
 					specMap[pKey] = match
@@ -74,7 +76,7 @@ Run a specific pipeline from the files by its YAML key
 				opts, err := pipelineSpecs.MakePipelineOpts(key)
 				if err != nil {
 					hasFailures = true
-					log.Printf("failed to make pipelines opts: %s\n", err)
+					fmt.Printf("failed to make pipelines opts: %s\n", err)
 					continue
 				}
 
@@ -93,13 +95,17 @@ Run a specific pipeline from the files by its YAML key
 					opts.Target.Selector.Pattern = targetPipeline
 				}
 
-				if targetBranch != "" {
-					opts.Target.RefName = targetBranch
+				if targetType != "" {
+					opts.Target.RefType = targetType
+				}
+
+				if targetName != "" {
+					opts.Target.RefName = targetName
 				}
 
 				// Checks
 				if hasFailures {
-					log.Printf("skipped %s (%s) %s", key, file, opts)
+					fmt.Printf("skipped %s (%s) %s", key, file, opts)
 					continue
 				}
 
@@ -108,12 +114,13 @@ Run a specific pipeline from the files by its YAML key
 				}
 
 				// Go!
-				log.Printf("running %s (%s) %s", key, file, opts)
+				fmt.Println("============================================================")
+				fmt.Printf("running %s (%s) %s\n", key, file, opts.String())
 				logs, err := DoRun(httpClient, opts)
 				printStepLogs(logs)
 
 				if err != nil {
-					log.Print(err.Error())
+					fmt.Print(err.Error())
 					hasFailures = true
 				}
 			}
@@ -127,7 +134,8 @@ Run a specific pipeline from the files by its YAML key
 
 func init() {
 	specCmd.Flags().StringVar(&targetPipeline, "target-pipeline", "", "--target-pipeline example")
-	specCmd.Flags().StringVar(&targetBranch, "target-branch", "", "--target-branch master")
+	specCmd.Flags().StringVar(&targetType, "target-type", "", "--target-type branch")
+	specCmd.Flags().StringVar(&targetName, "target-name", "", "--target-name feat")
 	specCmd.Flags().StringVar(&onlyRun, "only", "", "--only my_pipeline")
 	rootCmd.AddCommand(specCmd)
 }

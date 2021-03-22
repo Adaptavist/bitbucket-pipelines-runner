@@ -1,7 +1,7 @@
 package client
 
 import (
-	"log"
+	"fmt"
 	"time"
 
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/http"
@@ -59,14 +59,15 @@ func (c Client) PostPipelineAndWait(opts PipelineOpts) (p model.Pipeline, err er
 	}
 
 	// Would be handy for the end user to have a link
-	log.Print(urls.PipelineWeb(opts.Repo.Workspace, opts.Repo.Slug, p.BuildNumber))
+	fmt.Println(urls.PipelineWeb(opts.Repo.Workspace, opts.Repo.Slug, p.BuildNumber))
 
 	for {
-		log.Println(p.State)
+		fmt.Print(".")
 
 		c.sleep()
 
 		if p.State.Name == "COMPLETED" {
+			fmt.Print("\n")
 			break
 		}
 
@@ -117,5 +118,12 @@ func (c Client) GetStepLogs(opts PipelineOpts, p model.Pipeline, s model.Step) (
 
 	logContent = string(res)
 
+	return
+}
+
+// GetTag returns a tag if it exists from the bitbucket API
+func (c Client) GetTag(opts PipelineOpts) (tag model.TagResponse, err error) {
+	url := urls.Tag(opts.Repo.Workspace, opts.Repo.Slug, opts.Target.RefName)
+	err = c.Http.GetUnmarshalled(url, &tag)
 	return
 }

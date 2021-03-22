@@ -42,7 +42,7 @@ BITBUCKET_PASSWORD="password"
 
 Runs a single pipeling via flags 
 
-`bpr [args] workspace/repo_slug/branch[/pipeline_name]`
+`bpr [args] workspace/repo_slug/ref-type/ref-name[/pipeline_name]`
 
 - `--var 'key=value'` a repeatable flag for providing variables to your pipeline
 - `--secrete 'key=value'` a repeatable flag for providing secured variables to your pipeling
@@ -52,11 +52,13 @@ Runs a single pipeling via flags
 
 ```bash
 # runs default pipeline on the master branch
-bpr pipeline Owner/repo-slug/master 
+bpr pipeline Owner/repo-slug/branch/master 
 # runs a custom pipeline (my-pipeline) on master
-bpr pipeline Owner/repo-slug/master/my-pipeline
-# runs a pipeling with variables/secrets to send to your pipeline
-bpr pipeline Owner/repo-slug/master --var 'username=user' --secret 'password=password' --var 'timeout=10'
+bpr pipeline Owner/repo-slug/branch/master/my-pipeline
+# runs a custom pipeline (my-pipeline) on a tag
+bpr pipeline Owner/repo-slug/tag/v1.0.0/my-pipeline
+# runs a pipeline with variables/secrets to send to your pipeline
+bpr pipeline Owner/repo-slug/branch/master --var 'username=user' --secret 'password=password' --var 'timeout=10'
 ```
 
 ### Spec
@@ -72,9 +74,9 @@ variables:
 pipelines:
   # Pipeline keys are be globally unique to your working directory, not just the file
   my_pipeline_key:
-    pipeline: Owner/repo-slug/branch # defaults to "default" 
+    pipeline: Owner/repo-slug/branch/example # defaults to "default" 
   my_other_pipeliny_key:
-    pipeline: Owner/repo-slug/branch/pipeline # custom pipeline on master
+    pipeline: Owner/repo-slug/branch/example/pipeline # custom pipeline on master
     variables: 
       WAIT: 10 # Provides WAIT as a variable to the pipeline
 ```

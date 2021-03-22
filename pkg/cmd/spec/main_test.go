@@ -1,15 +1,16 @@
 package spec
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDefaultsPipeline(t *testing.T) {
 	spec, err := UnmarshalSpec(`
 pipelines:
   test:
-    pipeline: owner/repo/branch`)
+    pipeline: owner/repo/branch/example`)
 
 	assert.Nil(t, err, "err should be nil")
 	assert.NotNil(t, spec.Pipelines["test"], "test should not be nil")
@@ -18,15 +19,15 @@ pipelines:
 	assert.Nil(t, err, "err should be nil")
 	assert.Equal(t, "owner", opts.Repo.Workspace, "expected owner")
 	assert.Equal(t, "repo", opts.Repo.Slug, "expected repo")
-	assert.Equal(t, "branch", opts.Target.RefName, "expected ref")
-	assert.Equal(t, "default", opts.Target.Selector.Pattern, "expected default")
+	assert.Equal(t, "example", opts.Target.RefName, "expected example")
+	assert.Nil(t, opts.Target.Selector, "Selector should be nil")
 }
 
 func TestSpecifyPipelineName(t *testing.T) {
 	spec, err := UnmarshalSpec(`
 pipelines:
   test:
-    pipeline: owner/repo/branch/pipeline`)
+    pipeline: owner/repo/branch/example/pipeline`)
 
 	assert.Nil(t, err, "err should be nil")
 	opts, _ := spec.MakePipelineOpts("test")
@@ -40,7 +41,7 @@ variables:
   var_1: value_1
 pipelines:
   test:
-    pipeline: owner/repo/branch`)
+    pipeline: owner/repo/branch/example`)
 
 	assert.Nil(t, err, "err should be nil")
 	assert.NotNil(t, spec, "spec should not be nil")
@@ -58,7 +59,7 @@ variables:
   var_1: value_1
 pipelines:
   test:
-    pipeline: owner/repo/branch
+    pipeline: owner/repo/branch/example
     variables:
       var_2: value_2`)
 

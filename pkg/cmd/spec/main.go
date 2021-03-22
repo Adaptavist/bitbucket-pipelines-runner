@@ -3,15 +3,20 @@ package spec
 import (
 	"bytes"
 	"fmt"
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/model"
 	"io/ioutil"
 	"strings"
+
+	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/model"
 
 	"gopkg.in/yaml.v3"
 )
 
 func (s PipelineTarget) String() string {
-	return s.Workspace + "/" + s.Repo + "/" + s.Ref + "/" + s.Pipeline
+	str := s.Workspace + "/" + s.Repo + "/" + s.RefType + "/" + s.RefName
+	if s.CustomTarget != "" {
+		str = str + "/" + s.CustomTarget
+	}
+	return str
 }
 
 func UnmarshalSpec(specStr string) (spec Spec, err error) {
@@ -35,23 +40,28 @@ func UnmarshalSpecsFile(file string) (spec Spec, err error) {
 }
 
 // GetTarget from the spec string in the YAML config
-func (p Pipeline) GetTarget() (t PipelineTarget, err error) {
-	parts := strings.Split(p.Pipeline, "/")
+func (p Pipeline) GetTarget() (PipelineTarget, error) {
+	return StringToTarget(p.Pipeline)
+}
 
-	if len(parts) < 3 || len(parts) > 4 {
-		err = fmt.Errorf("spec identifier must consists 3-4 parts (workspace/repo/branch[/spec]), but got %d (%s)", len(parts), p.Pipeline)
+// StringToTarget takes a string and builds a PipelineTarget object
+func StringToTarget(str string) (target PipelineTarget, err error) {
+	parts := strings.Split(str, "/")
+
+	if len(parts) < 4 || len(parts) > 5 {
+		err = fmt.Errorf("spec identifier must consists 4-5 parts (workspace/repo/ref-type/ref-name[/spec]), but got %d (%s)", len(parts), str)
 		return
 	}
 
-	t = PipelineTarget{
+	target = PipelineTarget{
 		Workspace: parts[0],
 		Repo:      parts[1],
-		Ref:       parts[2],
-		Pipeline:  "default",
+		RefType:   parts[2],
+		RefName:   parts[3],
 	}
 
-	if len(parts) == 4 {
-		t.Pipeline = parts[3]
+	if len(parts) == 5 {
+		target.CustomTarget = parts[4]
 		return
 	}
 

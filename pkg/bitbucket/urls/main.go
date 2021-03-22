@@ -25,3 +25,7 @@ func PipelineSteps(workspace, slug, UUID string) string {
 func PipelineStepLogs(workspace, slug, pipelineUUID, stepUUID string) string {
 	return fmt.Sprintf("%s%s/log", PipelineSteps(workspace, slug, pipelineUUID), stepUUID)
 }
+
+func Tag(workspace, slug, tag string) string {
+	return fmt.Sprintf("%s/repositories/%s/%s/refs/tags/%s", baseURL, workspace, slug, tag)
+}

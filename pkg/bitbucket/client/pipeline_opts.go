@@ -1,7 +1,6 @@
 package client
 
 import (
-	"fmt"
 	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/model"
 )
 
@@ -14,7 +13,11 @@ type PipelineOpts struct {
 }
 
 func (o PipelineOpts) String() string {
-	return fmt.Sprintf("%s/%s/%s/%s", o.Repo.Workspace, o.Repo.Slug, o.Target.RefName, o.Target.Selector.Pattern)
+	str := o.Repo.Workspace + "/" + o.Repo.Slug + "/" + o.Target.RefName
+	if o.Target.Selector != nil {
+		str = str + "/" + o.Target.Selector.Pattern
+	}
+	return str
 }
 
 // NewPipelineOpts constructs empty PipelineOpts object

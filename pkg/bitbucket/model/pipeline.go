@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 )
 
@@ -31,6 +32,14 @@ type Pipeline struct {
 	State       State     `json:"state"`
 	Target      Target    `json:"target"`
 	Variables   Variables `json:"variables"`
+}
+
+func (p Pipeline) Equal(c Pipeline) bool {
+	return reflect.DeepEqual(p, c)
+}
+
+func (p Pipeline) Empty() bool {
+	return p.Equal(Pipeline{})
 }
 
 // String representation of the Pipeline (uuid state)

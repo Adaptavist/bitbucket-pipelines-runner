@@ -107,16 +107,16 @@ func (h Client) Post(url string, data interface{}) (resp []byte, err error) {
 		return
 	}
 
-	err = hasError(res.StatusCode)
-
-	if err != nil {
-		err = fmt.Errorf("failed to POST (%s) %s", url, err)
-		return
-	}
+	httpError := hasError(res.StatusCode)
 
 	resp, err = ioutil.ReadAll(res.Body)
 
 	if err != nil {
+		return
+	}
+
+	if httpError != nil {
+		err = fmt.Errorf("failed to POST (%s) %s - %s", url, httpError, string(resp))
 		return
 	}
 
@@ -141,6 +141,7 @@ func (h Client) GetUnmarshalled(url string, targetPtr interface{}) (err error) {
 	resp, err := h.Get(url)
 
 	if err != nil {
+		err = fmt.Errorf("%s - %s", err.Error(), string(resp))
 		return
 	}
 
