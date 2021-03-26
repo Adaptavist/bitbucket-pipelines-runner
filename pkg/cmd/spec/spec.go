@@ -69,7 +69,7 @@ func (s Spec) MakePipelineOpts(name string) (opts client.PipelineOpts, err error
 	opts = bitbucket.NewPipelineOpts().
 		WithTarget(target).
 		WithRepo(client.NewRepo(targetSpec.Workspace, targetSpec.Repo)).
-		WithVariables(s.ToBitbucketVariables(s.Variables.Merge(spec.Variables)))
+		WithVariables(s.ToBitbucketVariables(spec.Variables.Merge(s.Variables)))
 
 	return
 }

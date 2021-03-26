@@ -72,3 +72,31 @@ pipelines:
 	assert.Len(t, opts.Variables, 2, "pipeline should have two variables")
 
 }
+
+func TestPipelinesDontMergeVars(t *testing.T) {
+	spec, err := UnmarshalSpec(`
+variables:
+  var_1: value_1
+pipelines:
+  test-1:
+    pipeline: owner/repo/branch/example
+    variables:
+      var_2: value_2
+  test-2:
+    pipeline: owner/repo/branch/example
+    variables:
+      var_3: value_3`)
+	assert.Nil(t, err, "err should be nil")
+	assert.NotNil(t, spec, "spec should not be nil")
+	assert.Len(t, spec.Variables, 1, "variables should be 1 in length")
+
+	optsOne, err := spec.MakePipelineOpts("test-1")
+	assert.Nil(t, err, "err should be nil")
+	assert.NotNil(t, optsOne, "spec should not be nil")
+	assert.Len(t, optsOne.Variables, 2, "pipelines.test-1.variables should be 2 in length")
+
+	optsTwo, err := spec.MakePipelineOpts("test-2")
+	assert.Nil(t, err, "err should be nil")
+	assert.NotNil(t, optsTwo, "spec should not be nil")
+	assert.Len(t, optsTwo.Variables, 2, "pipelines.test-2.variables should be 2 in length")
+}
