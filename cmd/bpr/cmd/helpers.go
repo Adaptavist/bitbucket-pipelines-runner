@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/model"
 	"log"
 	"strings"
+
+	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/bitbucket/model"
 )
 
 func fatalIfNotNil(v error) {

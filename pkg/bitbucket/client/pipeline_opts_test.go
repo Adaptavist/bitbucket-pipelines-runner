@@ -3,7 +3,7 @@ package client
 import (
 	"testing"
 
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/model"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/bitbucket/model"
 	"github.com/stretchr/testify/assert"
 )
 

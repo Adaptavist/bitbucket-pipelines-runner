@@ -6,18 +6,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/client"
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/http"
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/model"
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/cmd/utils"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/bitbucket/client"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/bitbucket/http"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/bitbucket/model"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/cmd/utils"
 )
 
-func hasFailedSteps(steps []model.Step) bool {
-	fails := model.FilterSteps(steps, func(s model.Step) bool {
-		return s.State.Result.HasError()
-	})
-	return len(fails) > 0
-}
+// func hasFailedSteps(steps []model.Step) bool {
+// 	fails := model.FilterSteps(steps, func(s model.Step) bool {
+// 		return s.State.Result.HasError()
+// 	})
+// 	return len(fails) > 0
+// }
 
 // printStepLogs with a pretty lazy implementation
 func printStepLogs(logs map[string]string) {
