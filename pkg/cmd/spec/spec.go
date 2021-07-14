@@ -3,9 +3,9 @@ package spec
 import (
 	"fmt"
 
-	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/bitbucket"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/bitbucket/client"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/bitbucket/model"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/client"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/model"
 )
 
 type Variables map[string]string

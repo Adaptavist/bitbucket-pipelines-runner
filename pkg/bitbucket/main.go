@@ -1,8 +1,8 @@
 package bitbucket
 
 import (
-	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/bitbucket/client"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/bitbucket/http"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/client"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/http"
 )
 
 // NewClient helper for BitBucket

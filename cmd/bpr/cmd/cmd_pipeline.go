@@ -3,9 +3,9 @@ package cmd
 import (
 	"log"
 
-	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/bitbucket/client"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/bitbucket/model"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/cmd/spec"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/client"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/model"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/cmd/spec"
 	"github.com/spf13/cobra"
 )
 

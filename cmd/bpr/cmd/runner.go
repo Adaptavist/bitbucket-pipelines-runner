@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/bitbucket/client"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/bitbucket/http"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/bitbucket/model"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/cmd/utils"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/client"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/http"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/model"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/cmd/utils"
 )
 
 // func hasFailedSteps(steps []model.Step) bool {

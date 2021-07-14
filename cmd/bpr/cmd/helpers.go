@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/bitbucket/model"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/model"
 )
 
 func fatalIfNotNil(v error) {
