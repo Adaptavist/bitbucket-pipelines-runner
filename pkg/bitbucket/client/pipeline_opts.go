@@ -1,7 +1,7 @@
 package client
 
 import (
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/model"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/bitbucket/model"
 )
 
 // PipelineOpts is in internal model for requesting a spec to be executed

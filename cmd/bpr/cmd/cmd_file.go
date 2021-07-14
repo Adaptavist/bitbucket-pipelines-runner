@@ -5,9 +5,9 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/bitbucket/model"
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/cmd/spec"
-	"github.com/adaptavist/bitbucket-pipeline-runner/v1/pkg/cmd/utils"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/bitbucket/model"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/cmd/spec"
+	"github.com/adaptavist/bitbucket-pipelines-runner/v1/pkg/cmd/utils"
 	"github.com/spf13/cobra"
 )
 

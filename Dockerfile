@@ -1,5 +1,5 @@
 FROM golang:1.16.1-alpine AS build
-ARG DEST_DIR="/go/src/bitbucket-pipeline-runner"
+ARG DEST_DIR="/go/src/bitbucket-pipelines-runner"
 COPY . $DEST_DIR
 WORKDIR $DEST_DIR
 RUN apk update && apk add git openssh
