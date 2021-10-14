@@ -7,7 +7,7 @@ test : mods
 test_quiet : mods
 	go test ./...
 
-dist: clean test
+dist: clean
 	GOOS=darwin  GOARCH=amd64 go build -o ${DIST}/bpr-darwin-amd64  ${SRC}
 	GOOS=darwin  GOARCH=arm64 go build -o ${DIST}/bpr-darwin-arm64  ${SRC}
 	GOOS=linux   GOARCH=386   go build -o ${DIST}/bpr-linux-386     ${SRC}
