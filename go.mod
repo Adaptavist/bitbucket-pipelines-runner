@@ -1,8 +1,9 @@
-module github.com/adaptavist/bitbucket-pipelines-runner/v2
+module github.com/adaptavist/bitbucket_pipelines_runner
 
 go 1.16
 
 require (
+	github.com/adaptavist/bitbucket_pipelines_client v1.1.2
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/viper v1.7.1

@@ -1,0 +1,7 @@
+variable:
+  VAR_NAME: var_value
+pipelines:
+  example:
+    pipeline: workspace/slug/tag/v0.0.0/pipeline
+    variables:
+      VAR_NAME: var_value

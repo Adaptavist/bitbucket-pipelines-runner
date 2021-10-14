@@ -3,9 +3,8 @@ package spec
 import (
 	"fmt"
 
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/client"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/model"
+	"github.com/adaptavist/bitbucket_pipelines_client/builders"
+	"github.com/adaptavist/bitbucket_pipelines_client/model"
 )
 
 type Variables map[string]string
@@ -23,7 +22,6 @@ func (v Variables) Merge(merge Variables) (merged Variables) {
 	return
 }
 
-// PipelineTarget
 type PipelineTarget struct {
 	Workspace    string
 	Repo         string
@@ -47,12 +45,12 @@ type Spec struct {
 	Variables Variables `yaml:"variables"`
 }
 
-// MakePipelineOpts from a Pipeline found in the Spec file
-func (s Spec) MakePipelineOpts(name string) (opts client.PipelineOpts, err error) {
+// MakePostPipelineRequests from a Pipeline found in the Spec file
+func (s Spec) MakePostPipelineRequests(name string) (request model.PostPipelineRequest, err error) {
 	spec, ok := s.Pipelines[name]
 
 	if !ok {
-		return opts, fmt.Errorf("%s spec spec not found", name)
+		return request, fmt.Errorf("%s spec spec not found", name)
 	}
 
 	targetSpec, err := spec.GetTarget()
@@ -60,16 +58,21 @@ func (s Spec) MakePipelineOpts(name string) (opts client.PipelineOpts, err error
 		return
 	}
 
-	target := model.NewTarget(targetSpec.RefType, targetSpec.RefName)
+	targetBuilder := builders.Target().Ref(targetSpec.RefType, targetSpec.RefName)
 
 	if targetSpec.CustomTarget != "" {
-		target.WithCustomTarget(targetSpec.CustomTarget)
+		targetBuilder.Pattern(targetSpec.CustomTarget)
 	}
 
-	opts = bitbucket.NewPipelineOpts().
-		WithTarget(target).
-		WithRepo(client.NewRepo(targetSpec.Workspace, targetSpec.Repo)).
-		WithVariables(s.ToBitbucketVariables(spec.Variables.Merge(s.Variables)))
+	target := targetBuilder.Build()
+	variables := s.ToBitbucketVariables(spec.Variables.Merge(s.Variables))
+	pipeline := builders.Pipeline().Target(target).Variables(variables).Build()
+
+	request = model.PostPipelineRequest{
+		Workspace:  &targetSpec.Workspace,
+		Repository: &targetSpec.Repo,
+		Pipeline:   pipeline,
+	}
 
 	return
 }

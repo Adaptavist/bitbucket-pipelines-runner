@@ -1,0 +1,15 @@
+variable:
+  VAR_NAME: global_value
+pipelines:
+  example:
+    pipeline: workspace/slug/tag/v0.0.0/pipeline
+    variables:
+      VAR_NAME: local_value
+  example1:
+    pipeline: workspace/slug/tag/v0.0.0/pipeline
+    variables:
+      VAR_NAME: local_value
+  example3:
+    pipeline: workspace/slug/tag/v0.0.0/pipeline
+    variables:
+      VAR_NAME: local_value

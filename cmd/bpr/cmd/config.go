@@ -1,17 +1,26 @@
 package cmd
 
 import (
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/http"
+	"github.com/adaptavist/bitbucket_pipelines_client/client"
 	"github.com/spf13/viper"
 )
 
-func getHTTPClient() http.Client {
-	bitbucketUsername = viper.GetString("BITBUCKET_USERNAME")
-	fatalIfEmpty(bitbucketUsername, "BitBucket username required")
-	bitbucketPassword = viper.GetString("BITBUCKET_PASSWORD")
-	fatalIfEmpty(bitbucketPassword, "BitBucket password required")
-	return http.Client{Auth: http.Auth{
-		Username: bitbucketUsername,
-		Password: bitbucketPassword,
-	}}
+func makeClient() (c client.Client) {
+	config := client.Config{}
+
+	config.Username = viper.GetString("BITBUCKET_USERNAME")
+	fatalIfEmpty(config.Username, "BitBucket username required")
+
+	config.Password = viper.GetString("BITBUCKET_PASSWORD")
+	fatalIfEmpty(config.Password, "BitBucket password required")
+
+	baseURL := viper.GetString("BITBUCKET_BASE_URL")
+	if baseURL != "" {
+		config.BaseURL = baseURL
+	}
+
+	c = client.Client{
+		Config: &config,
+	}
+	return
 }

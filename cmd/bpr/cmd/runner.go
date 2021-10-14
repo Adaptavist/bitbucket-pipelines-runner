@@ -3,21 +3,11 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"github.com/adaptavist/bitbucket_pipelines_client/client"
+	"github.com/adaptavist/bitbucket_pipelines_client/model"
+	"github.com/adaptavist/bitbucket_pipelines_runner/cmd/bpr/utils"
 	"strings"
-	"time"
-
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/client"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/http"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/model"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/cmd/utils"
 )
-
-// func hasFailedSteps(steps []model.Step) bool {
-// 	fails := model.FilterSteps(steps, func(s model.Step) bool {
-// 		return s.State.Result.HasError()
-// 	})
-// 	return len(fails) > 0
-// }
 
 // printStepLogs with a pretty lazy implementation
 func printStepLogs(logs map[string]string) {
@@ -27,9 +17,9 @@ func printStepLogs(logs map[string]string) {
 	}
 }
 
-func DoDryRun(opts client.PipelineOpts) map[string]string {
-	jsonStr := utils.MarshalFormatted(opts)
-	for _, pipelineVariable := range opts.Variables {
+func DoDryRun(request model.PostPipelineRequest) map[string]string {
+	jsonStr := utils.MarshalFormatted(request)
+	for _, pipelineVariable := range *request.Variables {
 		if pipelineVariable.Secured {
 			jsonStr = strings.ReplaceAll(jsonStr, pipelineVariable.Value, "!SECURED!")
 		}
@@ -38,31 +28,35 @@ func DoDryRun(opts client.PipelineOpts) map[string]string {
 	return map[string]string{"dry": jsonStr}
 }
 
-func DoRun(http http.Client, opts client.PipelineOpts) (logs map[string]string, err error) {
-	if opts.Dry {
-		logs = DoDryRun(opts)
+func DoRun(bitbucket client.Client, request model.PostPipelineRequest, dry bool) (logs map[string]string, err error) {
+	if dry {
+		logs = DoDryRun(request)
 		return
 	}
 
-	bitbucket := client.NewClient(http).WithSleep(2 * time.Second)
-
 	// if the target is a tag, we need to look it up, get the commit hash and add it to the request
-	if opts.Target.RefType == model.RefTypeTag {
-		var tag model.TagResponse
-		tag, err = bitbucket.GetTag(opts)
+	if request.Target.RefType == model.RefTypeTag {
+		var tag *model.TagResponse
+
+		tag, err = bitbucket.GetTag(model.GetTagRequest{
+			Workspace:  request.Workspace,
+			Repository: request.Repository,
+			Tag:        request.Target.RefName,
+		})
 
 		if err != nil {
 			return
 		}
 
-		opts.Target.Commit = &model.Commit{
+		request.Target.Commit = &model.PipelineTargetCommit{
 			Type: "commit",
 			Hash: tag.Target.Hash,
 		}
 	}
 
-	pipeline, err := bitbucket.PostPipelineAndWait(opts)
+	pipeline, err := bitbucket.RunPipeline(request)
 	pipelineFailed := err != nil || pipeline.State.Result.Name == "FAILED"
+
 
 	logs = make(map[string]string)
 
@@ -70,24 +64,32 @@ func DoRun(http http.Client, opts client.PipelineOpts) (logs map[string]string, 
 		return
 	}
 
-	steps, err := bitbucket.GetSteps(opts, pipeline)
+	steps, err := bitbucket.GetPipelineSteps(model.GetPipelineRequest{
+		Workspace:  request.Workspace,
+		Repository: request.Repository,
+		Pipeline:   pipeline,
+	})
 
 	if err != nil {
 		return
 	}
 
-	var stepLog string
-
-	// Get step logs
+	// get step logs
 	for _, step := range steps {
 		if step.State.Result.HasError() {
 			logs[step.Name] = step.State.Result.Error.Message
 		} else {
-			stepLog, err = bitbucket.GetStepLogs(opts, pipeline, step)
-			if err != nil {
+			log, e := bitbucket.GetPipelineStepLog(model.GetPipelineStepRequest{
+				Workspace: request.Workspace,
+				Repository: request.Repository,
+				Pipeline: request.Pipeline,
+				PipelineStep: &step,
+			})
+			if e != nil {
+				err = e
 				return
 			} else {
-				logs[step.Name] = stepLog
+				logs[step.Name] = string(log[:])
 			}
 		}
 	}

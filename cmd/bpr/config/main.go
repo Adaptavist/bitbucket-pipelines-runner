@@ -6,8 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/http"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/cmd/utils"
+	"github.com/adaptavist/bitbucket_pipelines_runner/cmd/bpr/utils"
 	"github.com/spf13/viper"
 )
 
@@ -74,24 +73,4 @@ func LoadConfig(loadFile bool) (config Config, err error) {
 	}
 
 	return
-}
-
-// LoadConfigOrPanic does exactly what it says
-func LoadConfigOrPanic(loadFile bool) Config {
-	config, err := LoadConfig(loadFile)
-
-	if err != nil {
-		panic(err)
-	}
-
-	return config
-}
-
-func (c Config) GetHttp() http.Client {
-	return http.Client{
-		Auth: http.Auth{
-			Username: c.BitbucketUsername,
-			Password: c.BitbucketPassword,
-		},
-	}
 }

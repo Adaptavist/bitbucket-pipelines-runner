@@ -3,12 +3,10 @@ package spec
 import (
 	"bytes"
 	"fmt"
+	"github.com/adaptavist/bitbucket_pipelines_client/model"
+	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"strings"
-
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/model"
-
-	"gopkg.in/yaml.v3"
 )
 
 func (s PipelineTarget) String() string {
@@ -68,10 +66,10 @@ func StringToTarget(str string) (target PipelineTarget, err error) {
 	return
 }
 
-func (s Spec) ToBitbucketVariables(v Variables) model.Variables {
-	vars := model.Variables{}
+func (s Spec) ToBitbucketVariables(v Variables) model.PipelineVariables {
+	vars := model.PipelineVariables{}
 	for key, value := range v {
-		vars = append(vars, model.Variable{
+		vars = append(vars, model.PipelineVariable{
 			Key:   key,
 			Value: value,
 		})
