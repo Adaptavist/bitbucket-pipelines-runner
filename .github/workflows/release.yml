@@ -16,7 +16,7 @@ jobs:
       - run: go build -o bpr ./cmd/bpr
         env:
           CGO_ENABLED: 0
-      - run: go test -v ./...
+      - run: BPR_BITBUCKET_USERNAME=test BPR_BITBUCKET_PASSWORD=test go test -v ./...
   release:
     name: release
     runs-on: ubuntu-latest
