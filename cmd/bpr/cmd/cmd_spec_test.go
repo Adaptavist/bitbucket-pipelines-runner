@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestChDir (t *testing.T) {
+func TestChDir(t *testing.T) {
 	dir, err := os.Getwd()
 	assert.Nil(t, err, "couldn't get cwd")
 	rootCmd.SetArgs([]string{"spec", "--chdir", "../../../test/default", "--dry"})
@@ -16,7 +16,7 @@ func TestChDir (t *testing.T) {
 	assert.Nil(t, err, "couldn't reset dir")
 }
 
-func TestDuplicateSpecs (t *testing.T) {
+func TestDuplicateSpecs(t *testing.T) {
 	dir, err := os.Getwd()
 	assert.Nil(t, err, "couldn't get cwd")
 	rootCmd.SetArgs([]string{"spec", "--chdir", "../../../test/duplicates", "--dry"})

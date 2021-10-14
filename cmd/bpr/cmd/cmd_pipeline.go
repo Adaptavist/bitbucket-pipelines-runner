@@ -1,13 +1,20 @@
 package cmd
 
 import (
-	"log"
-
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/client"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/model"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/cmd/spec"
+	"github.com/adaptavist/bitbucket_pipelines_client/builders"
+	"github.com/adaptavist/bitbucket_pipelines_client/model"
+	"github.com/adaptavist/bitbucket_pipelines_runner/cmd/bpr/spec"
 	"github.com/spf13/cobra"
+	"log"
 )
+
+func makePipelineCmdTarget (refType string, refName string, target string) model.PipelineTarget {
+	t := builders.Target().Ref(refType, refName)
+	if target != "" {
+		t.Pattern(target)
+	}
+	return t.Build()
+}
 
 // pipelineCmd represents the run command
 var pipelineCmd = &cobra.Command{
@@ -23,23 +30,23 @@ Run pipeline with secured variables
 		if len(args) == 0 {
 			log.Fatal("pipeline expected")
 		}
-		httpClient := getHTTPClient()
+
+		client := makeClient()
 		variables, err := stringsToVars(variablesFlag, false)
 		fatalIfNotNil(err)
 		securedVariables, err := stringsToVars(secureVarsFlag, true)
 		fatalIfNotNil(err)
 		targetSpec, err := spec.StringToTarget(args[0])
 		fatalIfNotNil(err)
-		target := model.NewTarget(targetSpec.RefType, targetSpec.RefName)
-		if targetSpec.CustomTarget != "" {
-			target.WithCustomTarget(targetSpec.CustomTarget)
+		target := makePipelineCmdTarget(targetSpec.RefType, targetSpec.RefName, targetSpec.CustomTarget)
+
+		request := model.PostPipelineRequest{
+			Workspace:  &targetSpec.Workspace,
+			Repository: &targetSpec.Repo,
+			Pipeline:   builders.Pipeline().Variables(append(variables, securedVariables...)).Target(target).Build(),
 		}
-		opts := client.NewPipelineOpts().
-			WithDry(dryRun).
-			WithVariables(model.AppendVariables(variables, securedVariables)).
-			WithRepo(client.NewRepo(targetSpec.Workspace, targetSpec.Repo)).
-			WithTarget(target)
-		logs, err := DoRun(httpClient, opts)
+
+		logs, err := DoRun(client, request, dryRun)
 		printStepLogs(logs)
 		fatalIfNotNil(err)
 	},

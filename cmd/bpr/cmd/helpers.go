@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/model"
+	"github.com/adaptavist/bitbucket_pipelines_client/model"
 )
 
 func fatalIfNotNil(v error) {
@@ -20,7 +20,7 @@ func fatalIfEmpty(str, err string) {
 	}
 }
 
-func stringsToVars(varString []string, secured bool) (vars model.Variables, err error) {
+func stringsToVars(varString []string, secured bool) (vars model.PipelineVariables, err error) {
 	for _, str := range varString {
 		parts := strings.Split(str, "=")
 
@@ -29,7 +29,7 @@ func stringsToVars(varString []string, secured bool) (vars model.Variables, err 
 			return
 		}
 
-		vars = append(vars, model.Variable{
+		vars = append(vars, model.PipelineVariable{
 			Key:     strings.TrimSpace(parts[0]),
 			Value:   strings.TrimSpace(parts[1]),
 			Secured: secured,

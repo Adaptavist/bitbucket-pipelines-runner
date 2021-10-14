@@ -5,14 +5,12 @@ import (
 	"github.com/spf13/cobra"
 	"os"
 
-	homedir "github.com/mitchellh/go-homedir"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
 
 var dryRun bool
 var cfgFile string
-var bitbucketUsername string
-var bitbucketPassword string
 var variablesFlag []string
 var secureVarsFlag []string
 

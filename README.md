@@ -2,10 +2,11 @@
 
 This is my first attempt a developing a CLI tool using Golang, so please bare with me.
 
-The runner has been developed because of limitation within BitBucket pipelines, there is no native support in the YAML
-spec for triggering other piplines, while the [Trigger pipeline](https://bitbucket.org/atlassian/trigger-pipeline/src/main/)
-pipe fills the lack of the native support, it can add an incredible about of noise to your pipelines
-and doesn't send the output to the triggering pipeline, you must click through to it.
+The runner has been developed because of limitation within BitBucket pipelines, there is no native 
+support in the YAML spec for triggering other piplines, while
+the [Trigger pipeline](https://bitbucket.org/atlassian/trigger-pipeline/src/main/) pipe fills the
+lack of the native support, it can add an incredible amount of noise to your pipelines and doesn't
+send the output to the triggering pipeline, you must click through to it.
 
 ## Notes
 
@@ -15,7 +16,7 @@ and doesn't send the output to the triggering pipeline, you must click through t
 ## Configuration
 
 Regardless of the configuration choice, you must have an App Password setup with `write` access to
-`pipelines`.
+`pipelines` and `administrator` on `repositories`.
 
 **Using env vars**
 
@@ -59,9 +60,9 @@ bpr pipeline Owner/repo-slug/branch/main --var 'username=user' --secret 'passwor
 
 ### Spec
 
-Loads all `.bpr.yml` files in your current working directory to build a list of pipelines to run. Then
-either runs all of pipelines or just one if you provide the `--only` flag. Secrets are deliberately 
-left our of the YAML spec, as we don't want to risk of them being introduced into source control.
+Loads all `.bpr.yml` files in your current working directory to build a list of pipelines to run. Then either runs all
+of pipelines or just one if you provide the `--only` flag. Secrets are deliberately left our of the YAML spec, as we
+don't want to risk of them being introduced into source control.
 
 #### Example Spec file
 
@@ -94,6 +95,7 @@ Run a specific pipeline by its key in the spec:
 ```bash
 bpr spec --only "my_pipeline"
 ```
+
 Run piplines with additional variables, works the same as when running pipelines directly
 
 ```bash
@@ -105,8 +107,9 @@ Do a dry run
 ```bash
 bpr spec --dry
 ```
-You can also override the target branch, tag, and pipeline. Use this with great care as it will
-override the target for all pipelines, so its recomended to only be used with the `--only` flag.
+
+You can also override the target branch, tag, and pipeline. Use this with great care as it will override the target for
+all pipelines, so its recomended to only be used with the `--only` flag.
 
 ```bash
 bpr spec --target-type "tag" --target-ref "main" --target-pipeline "custom_pipeline"

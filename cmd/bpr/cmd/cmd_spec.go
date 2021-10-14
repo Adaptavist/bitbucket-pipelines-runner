@@ -3,15 +3,16 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/client"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/http"
 	"log"
 	"os"
 	"path/filepath"
 
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/bitbucket/model"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/cmd/spec"
-	"github.com/adaptavist/bitbucket-pipelines-runner/v2/pkg/cmd/utils"
+	"github.com/adaptavist/bitbucket_pipelines_client/builders"
+	"github.com/adaptavist/bitbucket_pipelines_client/client"
+
+	"github.com/adaptavist/bitbucket_pipelines_client/model"
+	"github.com/adaptavist/bitbucket_pipelines_runner/cmd/bpr/spec"
+	"github.com/adaptavist/bitbucket_pipelines_runner/cmd/bpr/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -33,13 +34,13 @@ Run pipelines with overridden target pipeline
 > bpr spec --target-pipeline pipeline_name --target-branch master
 Run a specific pipeline from the files by its YAML key
 > bpr spec --only my_pipeline`,
-	RunE: func(cmd *cobra.Command, args []string) (err error) {
-		var httpClient = getHTTPClient()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		var cli = makeClient()
 
 		if chdir != "" {
-			err = os.Chdir(chdir)
+			err := os.Chdir(chdir)
 			if err != nil {
-				return
+				return err
 			}
 		}
 
@@ -47,36 +48,40 @@ Run a specific pipeline from the files by its YAML key
 		variables, err := stringsToVars(variablesFlag, false)
 
 		if err != nil {
-			return
+			return err
 		}
 
 		securedVariables, err := stringsToVars(secureVarsFlag, true)
 
 		if err != nil {
-			return
+			return err
 		}
 
 		// Spec files
 		pipelines, err := loadPipelinesFromSpecFiles()
 
 		if err != nil {
-			return
+			return err
 		}
 
 		if onlyRun != "" {
-			opts, ok := pipelines[onlyRun]
+			request, ok := pipelines[onlyRun]
+
 			if !ok {
 				log.Fatalf("pipeline not found: %s", onlyRun)
 			}
-			err = run(httpClient, opts, variables, securedVariables)
-			if err != nil {
-				return
+
+			e := run(cli, request, variables, securedVariables)
+
+			if e != nil {
+				return e
 			}
 		} else {
-			for _, opts := range pipelines {
-				err = run(httpClient, opts, variables, securedVariables)
-				if err != nil {
-					return
+			for _, request := range pipelines {
+				e := run(cli, request, variables, securedVariables)
+
+				if e != nil {
+					return e
 				}
 			}
 		}
@@ -94,7 +99,7 @@ func init() {
 }
 
 // loadPipelinesFromSpecFiles loads all .bpr.yml files but also checks for duplicate pipeline keys and error if duplicates are found.
-func loadPipelinesFromSpecFiles() (pipelines map[string]client.PipelineOpts, err error) {
+func loadPipelinesFromSpecFiles() (pipelines map[string]model.PostPipelineRequest, err error) {
 	matches, err := filepath.Glob("*.bpr.yml")
 
 	if err != nil {
@@ -129,11 +134,11 @@ func loadPipelinesFromSpecFiles() (pipelines map[string]client.PipelineOpts, err
 	}
 
 	// pass 2 - reduce to just a map of pipelines
-	pipelines = make(map[string]client.PipelineOpts)
+	pipelines = make(map[string]model.PostPipelineRequest)
 
 	for _, fileSpec := range specFiles {
 		for key := range fileSpec.Pipelines {
-			pipeline, inErr := fileSpec.MakePipelineOpts(key)
+			pipeline, inErr := fileSpec.MakePostPipelineRequests(key)
 			if inErr != nil {
 				return nil, inErr
 			}
@@ -145,32 +150,39 @@ func loadPipelinesFromSpecFiles() (pipelines map[string]client.PipelineOpts, err
 }
 
 // run will run a pipeline with its variables with the ability to override
-func run(httpClient http.Client, opts client.PipelineOpts, variables model.Variables, securedVariables model.Variables) (err error) {
-	opts = opts.WithDry(dryRun)
-
+func run(cli client.Client, request model.PostPipelineRequest, variables model.PipelineVariables, securedVariables model.PipelineVariables) (err error) {
 	if len(variables) > 0 {
-		opts.Variables = model.AppendVariables(opts.Variables, variables)
+		vars := append(*request.Variables, variables...)
+		request.Variables = &vars
 	}
 
 	if len(securedVariables) > 0 {
-		opts.Variables = model.AppendVariables(opts.Variables, securedVariables)
+		secVars := append(*request.Variables, securedVariables...)
+		request.Variables = &secVars
 	}
 
+	// Use a builder to help override the target using args
+	targetBuilder := builders.Target()
+	targetBuilder.PipelineTarget = *request.Target
+
 	if targetPipeline != "" {
-		opts.Target.WithCustomTarget(targetPipeline)
+		targetBuilder.Pattern(targetPipeline)
 	}
 
 	if targetType != "" {
-		opts.Target.RefType = targetType
+		targetBuilder.RefType = targetType
 	}
 
 	if targetName != "" {
-		opts.Target.RefName = targetName
+		targetBuilder.RefName = targetName
 	}
 
+	target := targetBuilder.Build()
+	request.Target = &target
+
 	fmt.Println("============================================================")
-	fmt.Printf("running %s\n", opts.String())
-	logs, err := DoRun(httpClient, opts)
+	fmt.Printf("running %s/%s\n", *request.Workspace, *request.Repository)
+	logs, err := DoRun(cli, request, dryRun)
 	printStepLogs(logs)
 	return err
 }

@@ -28,11 +28,7 @@ mods:
 	go mod download
 
 check : test
-	staticcheck ./cmd/bpr/
-	staticcheck ./pkg/bitbucket/client/
-	staticcheck ./pkg/bitbucket/http/
-	staticcheck ./pkg/bitbucket/model/
-	staticcheck ./pkg/bitbucket/urls/
-	staticcheck ./pkg/cmd/config/
-	staticcheck ./pkg/cmd/spec/
-	staticcheck ./pkg/cmd/utils/
+	staticcheck ./cmd/bpr
+	staticcheck ./cmd/config/
+	staticcheck ./cmd/spec/
+	staticcheck ./cmd/utils/
